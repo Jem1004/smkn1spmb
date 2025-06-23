@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ppdb_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ppdb_user
+      POSTGRES_PASSWORD: ppdb_password
+      POSTGRES_DB: ppdb_smk
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ppdb_network
+
+  adminer:
+    image: adminer:latest
+    container_name: ppdb_adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - ppdb_network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+
+networks:
+  ppdb_network:
+    driver: bridge

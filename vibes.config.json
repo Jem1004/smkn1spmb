@@ -1,0 +1,64 @@
+{
+  "projectName": "PPDB SMK - Sistem Pendaftaran Siswa Digital",
+  "description": "Aplikasi berbasis web untuk pendaftaran siswa baru, dengan role admin dan siswa. Dibangun menggunakan Next.js 14, Tailwind CSS, Sadcn UI, dan PostgreSQL dalam Docker environment.",
+  "techStack": {
+    "frontend": "Next.js 14 App Router",
+    "ui": "Tailwind CSS + Sadcn UI",
+    "stateManagement": "Zustand",
+    "auth": "Credential-based (username & password)",
+    "database": "PostgreSQL (Docker)",
+    "orm": "Prisma",
+    "aiEditor": "Trea AI Code Editor"
+  },
+  "moduleStyle": "feature-based modular structure",
+  "routes": {
+    "login": "/login",
+    "adminDashboard": "/admin/dashboard",
+    "studentStatus": "/student/status"
+  },
+  "roles": ["admin", "student"],
+  "authFlow": {
+    "type": "credentials",
+    "session": "JWT (stateless)",
+    "roleBasedRouting": true
+  },
+  "formHandling": {
+    "source": "PDF Formulir PPDB",
+    "formModules": [
+      "FormPersonal",
+      "FormParent",
+      "FormEducation",
+      "FormMajor",
+      "FormDocuments",
+      "FormRanking"
+    ],
+    "validation": "client-side & server-side using zod or yup"
+  },
+  "uiGuidelines": {
+    "reusableComponents": true,
+    "noInlineStyle": true,
+    "uiFolder": "/components/ui",
+    "prefixNaming": true,
+    "inputAccessibility": true
+  },
+  "api": {
+    "style": "RESTful",
+    "layer": "/app/api/*",
+    "errorHandling": "centralized error boundary",
+    "responseFormat": "JSON with success/data/message"
+  },
+  "vibeRules": {
+    "noHardcodedData": true,
+    "composableComponents": true,
+    "strictTyping": true,
+    "formModularization": true,
+    "authSeparation": true,
+    "dashboardIsolation": true
+  },
+  "devExperience": {
+    "autoImports": true,
+    "promptTemplates": true,
+    "aiAssistedWorkflow": true,
+    "consistentFolderStructure": true
+  }
+}

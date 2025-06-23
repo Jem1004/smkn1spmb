@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  password String
+  role     Role   @default(STUDENT)
+
+  // Relasi ke Student jika role adalah STUDENT
+  student Student?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Student {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Data Personal
+  fullName    String
+  nickname    String?
+  birthPlace  String
+  birthDate   DateTime
+  gender      Gender
+  religion    String
+  nationality String
+  address     String
+  rt          String?
+  rw          String?
+  village     String
+  district    String
+  city        String
+  province    String
+  postalCode  String
+  phone       String?
+  email       String?
+
+  // Data Orang Tua/Wali
+  fatherName    String
+  fatherJob     String?
+  fatherPhone   String?
+  motherName    String
+  motherJob     String?
+  motherPhone   String?
+  guardianName  String?
+  guardianJob   String?
+  guardianPhone String?
+  parentAddress String?
+
+  // Data Pendidikan
+  previousSchool String
+  nisn           String? @unique
+  graduationYear Int
+
+  // Pilihan Jurusan
+  firstMajor  String
+  secondMajor String?
+  thirdMajor  String?
+
+  // Status Dokumen
+  hasIjazah     Boolean @default(false)
+  hasSKHUN      Boolean @default(false)
+  hasKK         Boolean @default(false)
+  hasAktaLahir  Boolean @default(false)
+  hasFoto       Boolean @default(false)
+  hasRaport     Boolean @default(false)
+  hasSertifikat Boolean @default(false)
+
+  // Status Pendaftaran
+  registrationStatus RegistrationStatus @default(PENDING)
+
+  // Relasi ke Ranking
+  ranking Ranking?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("students")
+}
+
+model Ranking {
+  id        String  @id @default(cuid())
+  studentId String  @unique
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Nilai Akademik
+  indonesianScore Float @default(0)
+  englishScore    Float @default(0)
+  mathScore       Float @default(0)
+  scienceScore    Float @default(0)
+
+  // Nilai Tambahan
+  certificateScore Float @default(0)
+  achievementScore Float @default(0)
+
+  // Total dan Ranking
+  totalScore Float @default(0)
+  rank       Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("rankings")
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
