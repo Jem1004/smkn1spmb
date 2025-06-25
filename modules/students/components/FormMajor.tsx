@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Info } from 'lucide-react'
-import { majorDataSchema, type MajorData } from '@/lib/validations/student'
+import { majorDataSchema } from '@/lib/validations/student'
 import { useToast } from '@/hooks/use-toast'
 import { z } from 'zod'
 
@@ -30,18 +30,6 @@ export default function FormMajor({ data, onDataChange, onNext, onPrevious }: Fo
   const handleInputChange = (field: keyof MajorFormData, value: string) => {
     const newData = { ...formData, [field]: value }
     
-    // Reset pilihan yang sama jika dipilih di pilihan lain
-    if (field === 'firstMajor') {
-      if (value === newData.secondMajor) newData.secondMajor = ''
-      if (value === newData.thirdMajor) newData.thirdMajor = ''
-    } else if (field === 'secondMajor') {
-      if (value === newData.firstMajor) newData.firstMajor = ''
-      if (value === newData.thirdMajor) newData.thirdMajor = ''
-    } else if (field === 'thirdMajor') {
-      if (value === newData.firstMajor) newData.firstMajor = ''
-      if (value === newData.secondMajor) newData.secondMajor = ''
-    }
-    
     setFormData(newData)
     if (onDataChange) {
       onDataChange(newData)
@@ -55,14 +43,7 @@ export default function FormMajor({ data, onDataChange, onNext, onPrevious }: Fo
 
   const validateForm = (): boolean => {
     try {
-      // Convert formData to match schema expectations
-      const dataToValidate = {
-        ...formData,
-        secondMajor: formData.secondMajor || '',
-        thirdMajor: formData.thirdMajor || ''
-      }
-      
-      majorDataSchema.parse(dataToValidate)
+      majorDataSchema.parse(formData)
       setErrors({})
       return true
     } catch (error) {
@@ -92,15 +73,7 @@ export default function FormMajor({ data, onDataChange, onNext, onPrevious }: Fo
     }
   }
 
-  const getAvailableOptions = (currentField: keyof MajorFormData) => {
-    const selectedMajors = [
-      currentField !== 'firstMajor' ? formData.firstMajor : '',
-      currentField !== 'secondMajor' ? formData.secondMajor : '',
-      currentField !== 'thirdMajor' ? formData.thirdMajor : ''
-    ].filter(Boolean)
 
-    return AVAILABLE_MAJORS.filter(major => !selectedMajors.includes(major))
-  }
 
   return (
     <Card>
@@ -132,79 +105,33 @@ export default function FormMajor({ data, onDataChange, onNext, onPrevious }: Fo
         )}
 
         <div className="space-y-4">
-          <div className="form-field">
-            <Label htmlFor="firstMajor" className="form-label">
-              Pilihan Jurusan Pertama *
+          <h3 className="font-semibold text-lg">Pilihan Jurusan</h3>
+          <p className="text-sm text-muted-foreground">
+            Pilih satu jurusan yang diinginkan dari daftar jurusan yang tersedia.
+          </p>
+          
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Jurusan yang Dipilih <span className="text-red-500">*</span>
             </Label>
             <Select
-              value={formData.firstMajor || ''}
-              onValueChange={(value) => handleInputChange('firstMajor', value)}
+              value={formData.selectedMajor || ''}
+              onValueChange={(value) => handleInputChange('selectedMajor', value)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih jurusan pertama" />
+              <SelectTrigger className={errors.selectedMajor ? 'border-red-500' : ''}>
+                <SelectValue placeholder="Pilih jurusan yang diinginkan" />
               </SelectTrigger>
               <SelectContent>
-                {getAvailableOptions('firstMajor').map((major) => (
+                {AVAILABLE_MAJORS.map((major) => (
                   <SelectItem key={major} value={major}>
                     {major}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.firstMajor && <p className="form-error">{errors.firstMajor}</p>}
-            <p className="text-sm text-muted-foreground mt-1">
-              Pilihan utama yang paling Anda inginkan
-            </p>
-          </div>
-
-          <div className="form-field">
-            <Label htmlFor="secondMajor" className="form-label">
-              Pilihan Jurusan Kedua
-            </Label>
-            <Select
-              value={formData.secondMajor || ''}
-              onValueChange={(value) => handleInputChange('secondMajor', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih jurusan kedua (opsional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">-- Tidak memilih --</SelectItem>
-                {getAvailableOptions('secondMajor').map((major) => (
-                  <SelectItem key={major} value={major}>
-                    {major}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground mt-1">
-              Pilihan alternatif jika pilihan pertama tidak tersedia
-            </p>
-          </div>
-
-          <div className="form-field">
-            <Label htmlFor="thirdMajor" className="form-label">
-              Pilihan Jurusan Ketiga
-            </Label>
-            <Select
-              value={formData.thirdMajor || ''}
-              onValueChange={(value) => handleInputChange('thirdMajor', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih jurusan ketiga (opsional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">-- Tidak memilih --</SelectItem>
-                {getAvailableOptions('thirdMajor').map((major) => (
-                  <SelectItem key={major} value={major}>
-                    {major}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground mt-1">
-              Pilihan cadangan terakhir
-            </p>
+            {errors.selectedMajor && (
+              <p className="form-error text-xs">{errors.selectedMajor}</p>
+            )}
           </div>
         </div>
 
@@ -213,27 +140,19 @@ export default function FormMajor({ data, onDataChange, onNext, onPrevious }: Fo
           <h3 className="font-semibold text-lg">Deskripsi Jurusan</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="space-y-2">
-              <h4 className="font-medium">Teknologi Informasi:</h4>
-              <ul className="text-muted-foreground space-y-1">
-                <li>• <strong>TKJ:</strong> Jaringan komputer dan server</li>
-                <li>• <strong>RPL:</strong> Pemrograman dan aplikasi</li>
-                <li>• <strong>MM:</strong> Desain grafis dan video</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
               <h4 className="font-medium">Teknik:</h4>
               <ul className="text-muted-foreground space-y-1">
-                <li>• <strong>TKR:</strong> Otomotif mobil</li>
-                <li>• <strong>TSM:</strong> Otomotif sepeda motor</li>
-                <li>• <strong>TEI:</strong> Elektronika industri</li>
+                <li>• <strong>Teknik Kendaraan Ringan Otomotif:</strong> Perawatan dan perbaikan mobil</li>
+                <li>• <strong>Teknik Alat Berat:</strong> Operasi dan maintenance alat berat</li>
+                <li>• <strong>Teknik Komputer dan Jaringan:</strong> Jaringan komputer dan IT</li>
               </ul>
             </div>
             <div className="space-y-2">
-              <h4 className="font-medium">Bisnis:</h4>
+              <h4 className="font-medium">Kesehatan & Bisnis:</h4>
               <ul className="text-muted-foreground space-y-1">
-                <li>• <strong>AKL:</strong> Akuntansi dan keuangan</li>
-                <li>• <strong>OTKP:</strong> Administrasi perkantoran</li>
-                <li>• <strong>BDP:</strong> Pemasaran digital</li>
+                <li>• <strong>Akuntansi dan Keuangan Lembaga:</strong> Pembukuan dan keuangan</li>
+                <li>• <strong>Asisten Keperawatan:</strong> Pelayanan kesehatan dasar</li>
+                <li>• <strong>Agribisnis Ternak Ruminansia:</strong> Peternakan sapi dan kambing</li>
               </ul>
             </div>
           </div>

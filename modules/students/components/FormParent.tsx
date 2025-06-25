@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { parentDataSchema, type ParentData } from '@/lib/validations/student'
+import { parentDataSchema } from '@/lib/validations/student'
 import { useToast } from '@/hooks/use-toast'
 import { z } from 'zod'
+import { Phone, User, Users, Home } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface FormParentProps {
   data?: Partial<ParentFormData>
@@ -45,12 +47,12 @@ export default function FormParent({ data = {}, onDataChange, onNext, onPrevious
       const dataToValidate = {
         ...formData,
         fatherJob: formData.fatherJob || '',
-        fatherPhone: formData.fatherPhone || '',
+        fatherEducation: formData.fatherEducation || '',
         motherJob: formData.motherJob || '',
-        motherPhone: formData.motherPhone || '',
+        motherEducation: formData.motherEducation || '',
         guardianName: formData.guardianName || '',
         guardianJob: formData.guardianJob || '',
-        guardianPhone: formData.guardianPhone || '',
+        parentPhone: formData.parentPhone || '',
         parentAddress: formData.parentAddress || ''
       }
       
@@ -92,138 +94,192 @@ export default function FormParent({ data = {}, onDataChange, onNext, onPrevious
       <CardContent className="space-y-6">
         {/* Data Ayah */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-primary">Data Ayah</h3>
-          
+          <h3 className="font-semibold text-lg flex items-center space-x-2">
+            <User className="h-5 w-5" />
+            <span>Data Ayah</span>
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-field">
-              <Label htmlFor="fatherName" className="form-label">
-                Nama Ayah *
+            <div className="space-y-2">
+              <Label htmlFor="fatherName" className="text-sm font-medium">
+                Nama Ayah <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="fatherName"
                 value={formData.fatherName || ''}
                 onChange={(e) => handleInputChange('fatherName', e.target.value)}
                 placeholder="Masukkan nama ayah"
+                className={errors.fatherName ? 'border-red-500' : ''}
               />
-              {errors.fatherName && <p className="form-error">{errors.fatherName}</p>}
+              {errors.fatherName && (
+                <p className="form-error text-xs">{errors.fatherName}</p>
+              )}
             </div>
-
-            <div className="form-field">
-              <Label htmlFor="fatherJob" className="form-label">
-                Pekerjaan Ayah
+            <div className="space-y-2">
+              <Label htmlFor="fatherJob" className="text-sm font-medium">
+                Pekerjaan Ayah <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="fatherJob"
                 value={formData.fatherJob || ''}
                 onChange={(e) => handleInputChange('fatherJob', e.target.value)}
                 placeholder="Masukkan pekerjaan ayah"
+                className={errors.fatherJob ? 'border-red-500' : ''}
               />
+              {errors.fatherJob && (
+                <p className="form-error text-xs">{errors.fatherJob}</p>
+              )}
             </div>
           </div>
-
-          <div className="form-field">
-            <Label htmlFor="fatherPhone" className="form-label">
-              Nomor Telepon Ayah
+          <div className="space-y-2">
+            <Label htmlFor="fatherEducation" className="text-sm font-medium">
+              Pendidikan Terakhir Ayah <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="fatherPhone"
-              value={formData.fatherPhone || ''}
-              onChange={(e) => handleInputChange('fatherPhone', e.target.value)}
-              placeholder="08123456789"
-            />
-            {errors.fatherPhone && <p className="form-error">{errors.fatherPhone}</p>}
+            <Select
+              value={formData.fatherEducation || ''}
+              onValueChange={(value) => handleInputChange('fatherEducation', value)}
+            >
+              <SelectTrigger className={errors.fatherEducation ? 'border-red-500' : ''}>
+                <SelectValue placeholder="Pilih pendidikan terakhir ayah" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SD">SD/Sederajat</SelectItem>
+                <SelectItem value="SMP">SMP/Sederajat</SelectItem>
+                <SelectItem value="SMA">SMA/SMK/Sederajat</SelectItem>
+                <SelectItem value="D3">Diploma 3</SelectItem>
+                <SelectItem value="S1">Sarjana (S1)</SelectItem>
+                <SelectItem value="S2">Magister (S2)</SelectItem>
+                <SelectItem value="S3">Doktor (S3)</SelectItem>
+                <SelectItem value="Lainnya">Lainnya</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.fatherEducation && (
+              <p className="form-error text-xs">{errors.fatherEducation}</p>
+            )}
           </div>
         </div>
 
         {/* Data Ibu */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-primary">Data Ibu</h3>
-          
+          <h3 className="font-semibold text-lg flex items-center space-x-2">
+            <User className="h-5 w-5" />
+            <span>Data Ibu</span>
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-field">
-              <Label htmlFor="motherName" className="form-label">
-                Nama Ibu *
+            <div className="space-y-2">
+              <Label htmlFor="motherName" className="text-sm font-medium">
+                Nama Ibu <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="motherName"
                 value={formData.motherName || ''}
                 onChange={(e) => handleInputChange('motherName', e.target.value)}
                 placeholder="Masukkan nama ibu"
+                className={errors.motherName ? 'border-red-500' : ''}
               />
-              {errors.motherName && <p className="form-error">{errors.motherName}</p>}
+              {errors.motherName && (
+                <p className="form-error text-xs">{errors.motherName}</p>
+              )}
             </div>
-
-            <div className="form-field">
-              <Label htmlFor="motherJob" className="form-label">
-                Pekerjaan Ibu
+            <div className="space-y-2">
+              <Label htmlFor="motherJob" className="text-sm font-medium">
+                Pekerjaan Ibu <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="motherJob"
                 value={formData.motherJob || ''}
                 onChange={(e) => handleInputChange('motherJob', e.target.value)}
                 placeholder="Masukkan pekerjaan ibu"
+                className={errors.motherJob ? 'border-red-500' : ''}
               />
+              {errors.motherJob && (
+                <p className="form-error text-xs">{errors.motherJob}</p>
+              )}
             </div>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="motherEducation" className="text-sm font-medium">
+              Pendidikan Terakhir Ibu <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={formData.motherEducation || ''}
+              onValueChange={(value) => handleInputChange('motherEducation', value)}
+            >
+              <SelectTrigger className={errors.motherEducation ? 'border-red-500' : ''}>
+                <SelectValue placeholder="Pilih pendidikan terakhir ibu" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SD">SD/Sederajat</SelectItem>
+                <SelectItem value="SMP">SMP/Sederajat</SelectItem>
+                <SelectItem value="SMA">SMA/SMK/Sederajat</SelectItem>
+                <SelectItem value="D3">Diploma 3</SelectItem>
+                <SelectItem value="S1">Sarjana (S1)</SelectItem>
+                <SelectItem value="S2">Magister (S2)</SelectItem>
+                <SelectItem value="S3">Doktor (S3)</SelectItem>
+                <SelectItem value="Lainnya">Lainnya</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.motherEducation && (
+              <p className="form-error text-xs">{errors.motherEducation}</p>
+            )}
+          </div>
+        </div>
 
-          <div className="form-field">
-            <Label htmlFor="motherPhone" className="form-label">
-              Nomor Telepon Ibu
+        {/* Nomor Telepon Orang Tua/Wali */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg flex items-center space-x-2">
+            <Phone className="h-5 w-5" />
+            <span>Kontak Orang Tua/Wali</span>
+          </h3>
+          <div className="space-y-2">
+            <Label htmlFor="parentPhone" className="text-sm font-medium">
+              Nomor Telepon Orang Tua/Wali <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="motherPhone"
-              value={formData.motherPhone || ''}
-              onChange={(e) => handleInputChange('motherPhone', e.target.value)}
-              placeholder="08123456789"
+              id="parentPhone"
+              type="tel"
+              value={formData.parentPhone || ''}
+              onChange={(e) => handleInputChange('parentPhone', e.target.value)}
+              placeholder="Contoh: 08123456789"
+              className={errors.parentPhone ? 'border-red-500' : ''}
             />
-            {errors.motherPhone && <p className="form-error">{errors.motherPhone}</p>}
+            <p className="text-xs text-muted-foreground">
+              Nomor telepon yang dapat dihubungi (ayah, ibu, atau wali)
+            </p>
+            {errors.parentPhone && (
+              <p className="form-error text-xs">{errors.parentPhone}</p>
+            )}
           </div>
         </div>
 
         {/* Data Wali (Opsional) */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-primary">Data Wali (Opsional)</h3>
-          <p className="text-sm text-muted-foreground">
-            Isi bagian ini jika ada wali selain orang tua
-          </p>
-          
+          <h3 className="font-semibold text-lg flex items-center space-x-2">
+            <Users className="h-5 w-5" />
+            <span>Data Wali (Opsional)</span>
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-field">
-              <Label htmlFor="guardianName" className="form-label">
+            <div className="space-y-2">
+              <Label htmlFor="guardianName" className="text-sm font-medium">
                 Nama Wali
               </Label>
               <Input
                 id="guardianName"
                 value={formData.guardianName || ''}
                 onChange={(e) => handleInputChange('guardianName', e.target.value)}
-                placeholder="Masukkan nama wali"
+                placeholder="Masukkan nama wali (jika ada)"
               />
             </div>
-
-            <div className="form-field">
-              <Label htmlFor="guardianJob" className="form-label">
+            <div className="space-y-2">
+              <Label htmlFor="guardianJob" className="text-sm font-medium">
                 Pekerjaan Wali
               </Label>
               <Input
                 id="guardianJob"
                 value={formData.guardianJob || ''}
                 onChange={(e) => handleInputChange('guardianJob', e.target.value)}
-                placeholder="Masukkan pekerjaan wali"
+                placeholder="Masukkan pekerjaan wali (jika ada)"
               />
             </div>
-          </div>
-
-          <div className="form-field">
-            <Label htmlFor="guardianPhone" className="form-label">
-              Nomor Telepon Wali
-            </Label>
-            <Input
-              id="guardianPhone"
-              value={formData.guardianPhone || ''}
-              onChange={(e) => handleInputChange('guardianPhone', e.target.value)}
-              placeholder="08123456789"
-            />
-            {errors.guardianPhone && <p className="form-error">{errors.guardianPhone}</p>}
           </div>
         </div>
 

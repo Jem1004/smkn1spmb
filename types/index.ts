@@ -15,7 +15,6 @@ export interface Student {
   
   // Data Personal
   fullName: string
-  nickname?: string
   birthPlace: string
   birthDate: Date
   gender: Gender
@@ -24,35 +23,40 @@ export interface Student {
   address: string
   rt?: string
   rw?: string
-  village: string
+  village?: string
   district: string
   city: string
   province: string
   postalCode: string
-  phone?: string
+  phoneNumber?: string
   email?: string
+  childOrder?: number
+  totalSiblings?: number
+  height?: number
+  weight?: number
+  medicalHistory?: string
   
   // Data Orang Tua/Wali
   fatherName: string
   fatherJob?: string
-  fatherPhone?: string
+  fatherEducation?: string
   motherName: string
   motherJob?: string
-  motherPhone?: string
+  motherEducation?: string
   guardianName?: string
   guardianJob?: string
-  guardianPhone?: string
+  parentPhone?: string
   parentAddress?: string
   
   // Data Pendidikan
-  previousSchool: string
+  schoolName: string
+  npsn?: string
   nisn?: string
   graduationYear: number
+  certificateNumber?: string
   
   // Pilihan Jurusan
-  firstMajor: string
-  secondMajor?: string
-  thirdMajor?: string
+  selectedMajor: string
   
   // Status Dokumen
   hasIjazah: boolean
@@ -75,14 +79,18 @@ export interface Ranking {
   studentId: string
   
   // Nilai Akademik
+  mathScore: number
   indonesianScore: number
   englishScore: number
-  mathScore: number
   scienceScore: number
   
-  // Nilai Tambahan
-  certificateScore: number
-  achievementScore: number
+  // Prestasi dan Sertifikat
+  academicAchievement: string
+  nonAcademicAchievement: string
+  certificateScore: string
+  
+  // Akreditasi Sekolah
+  accreditation: string
   
   // Total dan Ranking
   totalScore: number
@@ -100,6 +108,7 @@ export interface StudentWithRanking extends Student {
 export interface LoginCredentials {
   username: string
   password: string
+  role: Role
 }
 
 export interface AuthSession {
@@ -121,7 +130,6 @@ export interface ApiResponse<T = any> {
 // Form Data Types
 export interface PersonalFormData {
   fullName: string
-  nickname?: string
   birthPlace: string
   birthDate: string
   gender: Gender
@@ -130,38 +138,43 @@ export interface PersonalFormData {
   address: string
   rt?: string
   rw?: string
-  village: string
+  village?: string
   district: string
   city: string
   province: string
   postalCode: string
-  phone?: string
+  phoneNumber?: string
   email?: string
+  childOrder?: number
+  totalSiblings?: number
+  height?: number
+  weight?: number
+  medicalHistory?: string
 }
 
 export interface ParentFormData {
   fatherName: string
   fatherJob?: string
-  fatherPhone?: string
+  fatherEducation?: string
   motherName: string
   motherJob?: string
-  motherPhone?: string
+  motherEducation?: string
   guardianName?: string
   guardianJob?: string
-  guardianPhone?: string
+  parentPhone?: string
   parentAddress?: string
 }
 
 export interface EducationFormData {
-  previousSchool: string
+  schoolName: string
+  npsn?: string
   nisn?: string
-  graduationYear: number
+  graduationYear?: number
+  certificateNumber?: string
 }
 
 export interface MajorFormData {
-  firstMajor: string
-  secondMajor?: string
-  thirdMajor?: string
+  selectedMajor: string
 }
 
 export interface DocumentFormData {
@@ -175,13 +188,14 @@ export interface DocumentFormData {
 }
 
 export interface RankingFormData {
-  indonesianScore: number
-  englishScore: number
-  mathScore: number
-  scienceScore: number
-  academicAchievement: string
-  nonAcademicAchievement: string
-  certificateScore: string
+  mathScore?: number
+  indonesianScore?: number
+  englishScore?: number
+  scienceScore?: number
+  academicAchievement?: string
+  nonAcademicAchievement?: string
+  certificateScore?: string
+  accreditation?: string
 }
 
 export interface CompleteStudentFormData extends 
@@ -195,15 +209,12 @@ export interface CompleteStudentFormData extends
 
 // Available Majors
 export const AVAILABLE_MAJORS = [
-  'Teknik Komputer dan Jaringan (TKJ)',
-  'Rekayasa Perangkat Lunak (RPL)',
-  'Multimedia (MM)',
-  'Teknik Kendaraan Ringan (TKR)',
-  'Teknik Sepeda Motor (TSM)',
-  'Teknik Elektronika Industri (TEI)',
-  'Akuntansi dan Keuangan Lembaga (AKL)',
-  'Otomatisasi dan Tata Kelola Perkantoran (OTKP)',
-  'Bisnis Daring dan Pemasaran (BDP)'
+  'Teknik Kendaraan Ringan Otomotif',
+  'Teknik Alat Berat',
+  'Teknik Komputer dan Jaringan',
+  'Akuntansi dan Keuangan Lembaga',
+  'Asisten Keperawatan',
+  'Agribisnis Ternak Ruminansia'
 ] as const
 
 export type MajorType = typeof AVAILABLE_MAJORS[number]

@@ -2,14 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  PersonalFormData, 
-  ParentFormData, 
-  EducationFormData, 
-  MajorFormData, 
-  DocumentFormData, 
+import { useAuthStore } from '@/store/auth-store'
+import {
+  PersonalFormData,
+  ParentFormData,
+  EducationFormData,
+  MajorFormData,
+  DocumentFormData,
   RankingFormData,
-  CompleteStudentFormData 
+  CompleteStudentFormData
 } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -83,99 +84,104 @@ const STEPS: Step[] = [
   }
 ]
 
-export default function StudentFormWizard({ 
-  initialData, 
-  mode = 'create', 
-  onSubmit, 
-  onCancel 
+export default function StudentFormWizard({
+  initialData,
+  mode = 'create',
+  onSubmit,
+  onCancel
 }: StudentFormWizardProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const { token } = useAuthStore()
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
-  
-  const [formData, setFormData] = useState<CompleteStudentFormData>({
-    // Personal data - spread individual fields
-    fullName: initialData?.fullName || '',
-    nickname: initialData?.nickname || '',
-    birthPlace: initialData?.birthPlace || '',
-    birthDate: initialData?.birthDate || '',
-    gender: initialData?.gender || 'MALE',
-    religion: initialData?.religion || '',
-    nationality: initialData?.nationality || 'Indonesia',
-    address: initialData?.address || '',
-    rt: initialData?.rt || '',
-    rw: initialData?.rw || '',
-    village: initialData?.village || '',
-    district: initialData?.district || '',
-    city: initialData?.city || '',
-    province: initialData?.province || '',
-    postalCode: initialData?.postalCode || '',
-    phone: initialData?.phone || '',
-    email: initialData?.email || '',
-    
-    // Parent data
-    fatherName: initialData?.fatherName || '',
-    fatherJob: initialData?.fatherJob || '',
-    fatherPhone: initialData?.fatherPhone || '',
-    motherName: initialData?.motherName || '',
-    motherJob: initialData?.motherJob || '',
-    motherPhone: initialData?.motherPhone || '',
-    guardianName: initialData?.guardianName || '',
-    guardianJob: initialData?.guardianJob || '',
-    guardianPhone: initialData?.guardianPhone || '',
-    parentAddress: initialData?.parentAddress || '',
-    
-    // Education data
-    previousSchool: initialData?.previousSchool || '',
-    nisn: initialData?.nisn || '',
-    graduationYear: initialData?.graduationYear || new Date().getFullYear(),
-    
-    // Major data
-    firstMajor: initialData?.firstMajor || '',
-    secondMajor: initialData?.secondMajor || '',
-    thirdMajor: initialData?.thirdMajor || '',
-    
-    // Document data
-    hasIjazah: initialData?.hasIjazah || false,
-    hasSKHUN: initialData?.hasSKHUN || false,
-    hasKK: initialData?.hasKK || false,
-    hasAktaLahir: initialData?.hasAktaLahir || false,
-    hasFoto: initialData?.hasFoto || false,
-    hasRaport: initialData?.hasRaport || false,
-    hasSertifikat: initialData?.hasSertifikat || false,
-    
-    // Ranking data (optional)
-    ranking: initialData?.ranking ? {
-      indonesianScore: initialData.ranking.indonesianScore || 0,
-      englishScore: initialData.ranking.englishScore || 0,
-      mathScore: initialData.ranking.mathScore || 0,
-      scienceScore: initialData.ranking.scienceScore || 0,
-      academicAchievement: initialData.ranking.academicAchievement || 'none',
-      nonAcademicAchievement: initialData.ranking.nonAcademicAchievement || 'none',
-      certificateScore: initialData.ranking.certificateScore || 'none'
-    } : undefined
+
+  const [formData, setFormData] = useState<{
+    personal: PersonalFormData;
+    parent: ParentFormData;
+    education: EducationFormData;
+    major: MajorFormData;
+    documents: DocumentFormData;
+    ranking: RankingFormData;
+  }>({
+    personal: {
+      fullName: initialData?.fullName || '',
+      birthPlace: initialData?.birthPlace || '',
+      birthDate: initialData?.birthDate || '',
+      gender: initialData?.gender || 'MALE',
+      religion: initialData?.religion || '',
+      nationality: initialData?.nationality || 'Indonesia',
+      address: initialData?.address || '',
+      rt: initialData?.rt || '',
+      rw: initialData?.rw || '',
+      village: initialData?.village || '',
+      district: initialData?.district || '',
+      city: initialData?.city || '',
+      province: initialData?.province || '',
+      postalCode: initialData?.postalCode || '',
+      phoneNumber: initialData?.phoneNumber || '',
+      email: initialData?.email || '',
+      childOrder: initialData?.childOrder || 1,
+      totalSiblings: initialData?.totalSiblings || 1,
+      height: initialData?.height || 0,
+      weight: initialData?.weight || 0,
+      medicalHistory: initialData?.medicalHistory || ''
+    },
+    parent: {
+      fatherName: initialData?.fatherName || '',
+      fatherJob: initialData?.fatherJob || '',
+      fatherEducation: initialData?.fatherEducation || '',
+      motherName: initialData?.motherName || '',
+      motherJob: initialData?.motherJob || '',
+      motherEducation: initialData?.motherEducation || '',
+      guardianName: initialData?.guardianName || '',
+      guardianJob: initialData?.guardianJob || '',
+      parentPhone: initialData?.parentPhone || '',
+      parentAddress: initialData?.parentAddress || ''
+    },
+    education: {
+      schoolName: initialData?.schoolName || '',
+      npsn: initialData?.npsn || '',
+      nisn: initialData?.nisn || '',
+      graduationYear: initialData?.graduationYear || new Date().getFullYear(),
+      certificateNumber: initialData?.certificateNumber || ''
+    },
+    major: {
+      selectedMajor: initialData?.selectedMajor || ''
+    },
+    documents: {
+      hasIjazah: initialData?.hasIjazah || false,
+      hasSKHUN: initialData?.hasSKHUN || false,
+      hasKK: initialData?.hasKK || false,
+      hasAktaLahir: initialData?.hasAktaLahir || false,
+      hasFoto: initialData?.hasFoto || false,
+      hasRaport: initialData?.hasRaport || false,
+      hasSertifikat: initialData?.hasSertifikat || false
+    },
+    ranking: {
+      mathScore: initialData?.ranking?.mathScore || 0,
+      indonesianScore: initialData?.ranking?.indonesianScore || 0,
+      englishScore: initialData?.ranking?.englishScore || 0,
+      scienceScore: initialData?.ranking?.scienceScore || 0,
+      academicAchievement: initialData?.ranking?.academicAchievement || 'none',
+      nonAcademicAchievement: initialData?.ranking?.nonAcademicAchievement || 'none',
+      certificateScore: initialData?.ranking?.certificateScore || 'none',
+      accreditation: initialData?.ranking?.accreditation || 'Belum Terakreditasi'
+    }
   })
 
   const handleDataChange = (stepId: string, data: any) => {
-    if (stepId === 'ranking') {
-      setFormData(prev => ({
-        ...prev,
-        ranking: { ...prev.ranking, ...data }
-      }))
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        ...data
-      }))
-    }
+    setFormData(prev => ({
+      ...prev,
+      [stepId]: { ...prev[stepId as keyof typeof prev], ...data }
+    }))
   }
 
   const handleNext = () => {
     // Mark current step as completed
-setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
-    
+    setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
+
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1)
     }
@@ -197,35 +203,52 @@ setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
-      
+
       if (onSubmit) {
-        await onSubmit(formData)
+        await onSubmit({
+          ...formData.personal,
+          ...formData.parent,
+          ...formData.education,
+          ...formData.major,
+          ...formData.documents,
+          ranking: formData.ranking
+        })
       } else {
         // Default submit behavior
         const endpoint = mode === 'edit' && (initialData as any)?.id
           ? `/api/students/${(initialData as any)?.id}`
           : '/api/students'
-        
+
         const method = mode === 'edit' ? 'PUT' : 'POST'
-        
+
+        // Prepare data in the correct structure for API
+        const submitData = {
+          personal: formData.personal,
+          parent: formData.parent,
+          education: formData.education,
+          major: formData.major,
+          document: formData.documents, // Note: API expects 'document' not 'documents'
+          ranking: formData.ranking
+        }
+
         const response = await fetch(endpoint, {
           method,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(submitData)
         })
-        
+
         if (!response.ok) {
           const error = await response.json()
-          
+
           // Show detailed validation errors if available
           if (error.details && Array.isArray(error.details)) {
-            const errorMessages = error.details.map((detail: any) => 
+            const errorMessages = error.details.map((detail: any) =>
               `${detail.field}: ${detail.message}`
             ).join('\n')
-            
+
             toast({
               variant: "destructive",
               title: "Validasi Gagal",
@@ -238,24 +261,24 @@ setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
               description: error.error || 'Gagal menyimpan data siswa'
             })
           }
-          
+
           throw new Error(error.error || 'Failed to save student data')
         }
-        
+
         const result = await response.json()
-        
+
         // Show success message
         toast({
           title: "Berhasil!",
           description: mode === 'edit' ? 'Data siswa berhasil diperbarui!' : 'Data siswa berhasil disimpan!'
         })
-        
+
         // Navigate back to dashboard
         router.push('/admin/dashboard')
       }
     } catch (error) {
       console.error('Error submitting form:', error)
-      
+
       // Only show toast if it's not already shown above
       if (!(error instanceof Error && error.message.includes('Failed to save student data'))) {
         toast({
@@ -287,7 +310,7 @@ setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
   const CurrentStepComponent = currentStepData.component
 
   const isLastStep = currentStep === STEPS.length - 1
-  const canSubmit = STEPS.filter(step => step.required).every((step, index) => 
+  const canSubmit = STEPS.filter(step => step.required).every((step, index) =>
     completedSteps.has(index)
   )
 
@@ -295,60 +318,15 @@ setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
   const getStepData = (stepId: string) => {
     switch (stepId) {
       case 'personal':
-        return {
-          fullName: formData.fullName,
-          nickname: formData.nickname,
-          birthPlace: formData.birthPlace,
-          birthDate: formData.birthDate,
-          gender: formData.gender,
-          religion: formData.religion,
-          nationality: formData.nationality,
-          address: formData.address,
-          rt: formData.rt,
-          rw: formData.rw,
-          village: formData.village,
-          district: formData.district,
-          city: formData.city,
-          province: formData.province,
-          postalCode: formData.postalCode,
-          phone: formData.phone,
-          email: formData.email
-        }
+        return formData.personal
       case 'parent':
-        return {
-          fatherName: formData.fatherName,
-          fatherJob: formData.fatherJob,
-          fatherPhone: formData.fatherPhone,
-          motherName: formData.motherName,
-          motherJob: formData.motherJob,
-          motherPhone: formData.motherPhone,
-          guardianName: formData.guardianName,
-          guardianJob: formData.guardianJob,
-          guardianPhone: formData.guardianPhone,
-          parentAddress: formData.parentAddress
-        }
+        return formData.parent
       case 'education':
-        return {
-          previousSchool: formData.previousSchool,
-          nisn: formData.nisn,
-          graduationYear: formData.graduationYear
-        }
+        return formData.education
       case 'major':
-        return {
-          firstMajor: formData.firstMajor,
-          secondMajor: formData.secondMajor,
-          thirdMajor: formData.thirdMajor
-        }
+        return formData.major
       case 'documents':
-        return {
-          hasIjazah: formData.hasIjazah,
-          hasSKHUN: formData.hasSKHUN,
-          hasKK: formData.hasKK,
-          hasAktaLahir: formData.hasAktaLahir,
-          hasFoto: formData.hasFoto,
-          hasRaport: formData.hasRaport,
-          hasSertifikat: formData.hasSertifikat
-        }
+        return formData.documents
       case 'ranking':
         return formData.ranking
       default:
@@ -357,67 +335,68 @@ setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          {mode === 'edit' ? 'Edit Data Siswa' : 'Pendaftaran Siswa Baru'}
-        </h1>
-        <p className="text-muted-foreground">
-          {mode === 'edit' 
-            ? 'Perbarui informasi data siswa' 
-            : 'Lengkapi semua informasi yang diperlukan untuk pendaftaran'
-          }
-        </p>
+    <div className="space-y-8">
+      {/* Modern Header */}
+      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-2xl p-8 border border-blue-200/50 dark:border-blue-800/50 shadow-lg">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+            {mode === 'edit' ? 'Edit Data Siswa' : 'Formulir Pendaftaran Siswa'}
+          </h1>
+          <p className="text-muted-foreground text-lg font-medium">
+            {mode === 'edit'
+              ? 'Perbarui informasi data siswa dengan lengkap dan akurat'
+              : 'Lengkapi semua informasi yang diperlukan untuk pendaftaran PPDB'
+            }
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Pastikan semua data yang dimasukkan benar dan sesuai dengan dokumen resmi
+          </p>
+        </div>
       </div>
 
-      {/* Progress */}
-      <Card className="mb-8">
-        <CardContent className="p-6">
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">Progress Pengisian</span>
-              <span className="text-sm text-muted-foreground">
-                {completedSteps.size}/{STEPS.length} langkah selesai
-              </span>
-            </div>
-            <Progress value={progress} className="h-2" />
+      {/* Minimalist Progress Section */}
+      <Card className="border-0 shadow-md bg-white/90 dark:bg-gray-900/90">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Progress</span>
+            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+              {completedSteps.size}/{STEPS.length}
+            </span>
           </div>
-          
-          {/* Step Navigation */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+          <Progress value={progress} className="h-2 mb-4" />
+
+          {/* Compact Step Navigation */}
+          <div className="flex flex-wrap gap-2">
             {STEPS.map((step, index) => {
               const isCompleted = isStepCompleted(index)
               const isCurrent = index === currentStep
               const isAccessible = isStepAccessible(index)
-              
+
               return (
                 <button
                   key={step.id}
                   onClick={() => handleStepClick(index)}
                   disabled={!isAccessible}
-                  className={`p-3 rounded-lg text-left transition-colors ${
-                    isCurrent
-                      ? 'bg-primary text-primary-foreground'
+                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${isCurrent
+                      ? 'bg-blue-100 text-blue-700 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600'
                       : isCompleted
-                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                      : isAccessible
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      : 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                  }`}
+                        ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-600'
+                        : isAccessible
+                          ? 'bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700'
+                          : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700'
+                    }`}
                 >
-                  <div className="flex items-center space-x-2 mb-1">
-                    {isCompleted ? (
-                      <CheckCircle className="h-4 w-4" />
-                    ) : (
-                      <Circle className="h-4 w-4" />
-                    )}
-                    <span className="text-xs font-medium">{index + 1}</span>
+                  <div className="flex items-center space-x-1">
+                    <span className={`w-4 h-4 rounded-full flex items-center justify-center text-xs ${isCompleted
+                        ? 'bg-green-500 text-white'
+                        : isCurrent
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-slate-300 text-slate-600 dark:bg-slate-600 dark:text-slate-400'
+                      }`}>
+                      {isCompleted ? '✓' : index + 1}
+                    </span>
+                    <span className="hidden sm:inline">{step.title}</span>
                   </div>
-                  <div className="text-xs font-medium">{step.title}</div>
-                  {step.required && (
-                    <div className="text-xs opacity-75">Wajib</div>
-                  )}
                 </button>
               )
             })}
@@ -425,55 +404,80 @@ setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
         </CardContent>
       </Card>
 
-      {/* Current Step */}
-      <div className="mb-8">
-        <CurrentStepComponent
-          data={getStepData(currentStepData.id)}
-          onDataChange={(data: any) => handleDataChange(currentStepData.id, data)}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-        />
-      </div>
+      {/* Current Step Content */}
+      <Card className="border-0 shadow-xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm">
+        <CardHeader className="pb-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-t-xl">
+          <CardTitle className="flex items-center space-x-3">
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isStepCompleted(currentStep)
+                ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                : 'bg-gradient-to-r from-blue-500 to-indigo-500'
+              }`}>
+              {isStepCompleted(currentStep) ? (
+                <CheckCircle className="h-5 w-5 text-white" />
+              ) : (
+                <span className="text-sm font-bold text-white">{currentStep + 1}</span>
+              )}
+            </div>
+            <div>
+              <span className="text-xl font-bold text-slate-800 dark:text-slate-200">{currentStepData.title}</span>
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-normal">{currentStepData.description}</p>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8">
+          <CurrentStepComponent
+            data={getStepData(currentStepData.id)}
+            onDataChange={(data: any) => handleDataChange(currentStepData.id, data)}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            isFirstStep={currentStep === 0}
+            isLastStep={currentStep === STEPS.length - 1}
+          />
+        </CardContent>
+      </Card>
 
-      {/* Navigation */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
+      {/* Enhanced Navigation */}
+      <Card className="border-0 shadow-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
                 onClick={handleCancel}
                 disabled={isSubmitting}
+                className="border-2 border-red-200 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 hover:text-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 Batal
               </Button>
-              
+
               {currentStep > 0 && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handlePrevious}
                   disabled={isSubmitting}
+                  className="border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Sebelumnya
                 </Button>
               )}
             </div>
-            
-            <div className="flex space-x-2">
+
+            <div className="flex flex-wrap gap-3">
               {!isLastStep ? (
-                <Button 
+                <Button
                   onClick={handleNext}
                   disabled={isSubmitting}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-8 py-3"
                 >
                   Selanjutnya
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               ) : (
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   disabled={!canSubmit || isSubmitting}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isSubmitting ? (
                     <>
@@ -490,12 +494,22 @@ setCompletedSteps(prev => new Set(Array.from(prev).concat([currentStep])))
               )}
             </div>
           </div>
-          
+
           {!canSubmit && isLastStep && (
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                Silakan lengkapi semua langkah wajib sebelum mengirim data.
-              </p>
+            <div className="mt-6 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-200 dark:border-yellow-600 rounded-2xl shadow-lg">
+              <div className="flex items-center space-x-3">
+                <div className="h-8 w-8 rounded-full bg-yellow-400 flex items-center justify-center">
+                  <span className="text-yellow-800 font-bold text-sm">!</span>
+                </div>
+                <div>
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200 font-semibold">
+                    Silakan lengkapi semua langkah wajib sebelum mengirim data.
+                  </p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Pastikan semua informasi yang diperlukan telah diisi dengan benar.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>

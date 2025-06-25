@@ -1,0 +1,72 @@
+{
+  "theme": {
+    "mode": "light",
+    "colors": {
+      "background": "rgb(252, 252, 252)",
+      "foreground": "rgb(0, 0, 0)",
+      "card": "rgb(255, 255, 255)",
+      "cardForeground": "rgb(0, 0, 0)",
+      "popover": "rgb(252, 252, 252)",
+      "popoverForeground": "rgb(0, 0, 0)",
+      "primary": "rgb(0, 0, 0)",
+      "primaryForeground": "rgb(255, 255, 255)",
+      "secondary": "rgb(235, 235, 235)",
+      "secondaryForeground": "rgb(0, 0, 0)",
+      "muted": "rgb(245, 245, 245)",
+      "mutedForeground": "rgb(82, 82, 82)",
+      "accent": "rgb(235, 235, 235)",
+      "accentForeground": "rgb(0, 0, 0)",
+      "destructive": "rgb(229, 75, 79)",
+      "destructiveForeground": "rgb(255, 255, 255)",
+      "border": "rgb(228, 228, 228)",
+      "input": "rgb(235, 235, 235)",
+      "ring": "rgb(0, 0, 0)"
+    },
+    "charts": {
+      "chart1": "rgb(255, 174, 4)",
+      "chart2": "rgb(45, 98, 239)",
+      "chart3": "rgb(164, 164, 164)",
+      "chart4": "rgb(228, 228, 228)",
+      "chart5": "rgb(116, 116, 116)"
+    },
+    "sidebar": {
+      "background": "rgb(252, 252, 252)",
+      "foreground": "rgb(0, 0, 0)",
+      "primary": "rgb(0, 0, 0)",
+      "primaryForeground": "rgb(255, 255, 255)",
+      "accent": "rgb(235, 235, 235)",
+      "accentForeground": "rgb(0, 0, 0)",
+      "border": "rgb(235, 235, 235)",
+      "ring": "rgb(0, 0, 0)"
+    }
+  },
+  "typography": {
+    "fontSans": "Geist, sans-serif",
+    "fontSerif": "Georgia, serif",
+    "fontMono": "Geist Mono, monospace"
+  },
+  "layout": {
+    "radius": {
+      "sm": "calc(0.5rem - 4px)",
+      "md": "calc(0.5rem - 2px)",
+      "lg": "0.5rem",
+      "xl": "calc(0.5rem + 4px)"
+    },
+    "shadow": {
+      "2xs": "0px 1px 2px 0px hsl(0 0% 0% / 0.09)",
+      "xs": "0px 1px 2px 0px hsl(0 0% 0% / 0.09)",
+      "sm": "0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18)",
+      "default": "0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18)",
+      "md": "0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 2px 4px -1px hsl(0 0% 0% / 0.18)",
+      "lg": "0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18)",
+      "xl": "0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18)",
+      "2xl": "0px 1px 2px 0px hsl(0 0% 0% / 0.45)"
+    }
+  },
+  "meta": {
+    "generatedBy": "ChatGPT",
+    "date": "2025-06-24",
+    "format": "Trea Design JSON",
+    "supportsDarkMode": true
+  }
+}

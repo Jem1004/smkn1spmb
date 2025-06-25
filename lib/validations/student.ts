@@ -14,11 +14,6 @@ export const personalDataSchema = z.object({
     .max(100, 'Nama lengkap maksimal 100 karakter')
     .regex(/^[a-zA-Z\s.,']+$/, 'Nama hanya boleh mengandung huruf, spasi, titik, koma, dan apostrof'),
   
-  nickname: z.string()
-    .max(50, 'Nama panggilan maksimal 50 karakter')
-    .optional()
-    .or(z.literal('')),
-  
   birthPlace: z.string()
     .min(2, 'Tempat lahir minimal 2 karakter')
     .max(50, 'Tempat lahir maksimal 50 karakter'),
@@ -60,7 +55,9 @@ export const personalDataSchema = z.object({
   
   village: z.string()
     .min(2, 'Kelurahan/Desa minimal 2 karakter')
-    .max(50, 'Kelurahan/Desa maksimal 50 karakter'),
+    .max(50, 'Kelurahan/Desa maksimal 50 karakter')
+    .optional()
+    .or(z.literal('')),
   
   district: z.string()
     .min(2, 'Kecamatan minimal 2 karakter')
@@ -77,13 +74,34 @@ export const personalDataSchema = z.object({
   postalCode: z.string()
     .regex(postalCodeRegex, 'Kode pos harus 5 digit angka'),
   
-  phone: z.string()
+  phoneNumber: z.string()
     .regex(phoneRegex, 'Format nomor telepon tidak valid')
     .optional()
     .or(z.literal('')),
   
   email: z.string()
     .regex(emailRegex, 'Format email tidak valid')
+    .optional()
+    .or(z.literal('')),
+  
+  childOrder: z.number()
+    .min(1, 'Anak ke- minimal 1')
+    .max(20, 'Anak ke- maksimal 20'),
+  
+  totalSiblings: z.number()
+    .min(0, 'Jumlah saudara minimal 0')
+    .max(20, 'Jumlah saudara maksimal 20'),
+  
+  height: z.number()
+    .min(100, 'Tinggi badan minimal 100 cm')
+    .max(250, 'Tinggi badan maksimal 250 cm'),
+  
+  weight: z.number()
+    .min(20, 'Berat badan minimal 20 kg')
+    .max(200, 'Berat badan maksimal 200 kg'),
+  
+  medicalHistory: z.string()
+    .max(500, 'Riwayat penyakit maksimal 500 karakter')
     .optional()
     .or(z.literal(''))
 })
@@ -99,10 +117,9 @@ export const parentDataSchema = z.object({
     .optional()
     .or(z.literal('')),
   
-  fatherPhone: z.string()
-    .regex(phoneRegex, 'Format nomor telepon ayah tidak valid')
-    .optional()
-    .or(z.literal('')),
+  fatherEducation: z.string()
+    .min(1, 'Pendidikan ayah harus dipilih')
+    .max(50, 'Pendidikan ayah maksimal 50 karakter'),
   
   motherName: z.string()
     .min(2, 'Nama ibu minimal 2 karakter')
@@ -113,10 +130,9 @@ export const parentDataSchema = z.object({
     .optional()
     .or(z.literal('')),
   
-  motherPhone: z.string()
-    .regex(phoneRegex, 'Format nomor telepon ibu tidak valid')
-    .optional()
-    .or(z.literal('')),
+  motherEducation: z.string()
+    .min(1, 'Pendidikan ibu harus dipilih')
+    .max(50, 'Pendidikan ibu maksimal 50 karakter'),
   
   guardianName: z.string()
     .max(100, 'Nama wali maksimal 100 karakter')
@@ -128,10 +144,8 @@ export const parentDataSchema = z.object({
     .optional()
     .or(z.literal('')),
   
-  guardianPhone: z.string()
-    .regex(phoneRegex, 'Format nomor telepon wali tidak valid')
-    .optional()
-    .or(z.literal('')),
+  parentPhone: z.string()
+    .regex(phoneRegex, 'Format nomor telepon orang tua tidak valid'),
   
   parentAddress: z.string()
     .max(200, 'Alamat orang tua maksimal 200 karakter')
@@ -141,9 +155,14 @@ export const parentDataSchema = z.object({
 
 // Education Data Schema
 export const educationDataSchema = z.object({
-  previousSchool: z.string()
+  schoolName: z.string()
     .min(5, 'Nama sekolah minimal 5 karakter')
     .max(100, 'Nama sekolah maksimal 100 karakter'),
+  
+  npsn: z.string()
+    .min(8, 'NPSN minimal 8 karakter')
+    .max(8, 'NPSN harus 8 karakter')
+    .regex(/^[0-9]{8}$/, 'NPSN harus 8 digit angka'),
   
   nisn: z.string()
     .regex(nisnRegex, 'NISN harus 10 digit angka')
@@ -151,29 +170,18 @@ export const educationDataSchema = z.object({
     .or(z.literal('')),
   
   graduationYear: z.number()
-    .min(2020, 'Tahun lulus minimal 2020')
-    .max(new Date().getFullYear(), `Tahun lulus maksimal ${new Date().getFullYear()}`)
+    .min(2000, 'Tahun lulus minimal 2000')
+    .max(2030, 'Tahun lulus maksimal 2030'),
+  
+  certificateNumber: z.string()
+    .min(5, 'Nomor ijazah/SKL minimal 5 karakter')
+    .max(50, 'Nomor ijazah/SKL maksimal 50 karakter')
 })
 
 // Major Selection Schema
 export const majorDataSchema = z.object({
-  firstMajor: z.string()
-    .min(1, 'Pilihan jurusan pertama harus dipilih'),
-  
-  secondMajor: z.string()
-    .optional()
-    .or(z.literal('')),
-  
-  thirdMajor: z.string()
-    .optional()
-    .or(z.literal(''))
-}).refine((data) => {
-  const majors = [data.firstMajor, data.secondMajor, data.thirdMajor].filter(Boolean)
-  const uniqueMajors = new Set(majors)
-  return majors.length === uniqueMajors.size
-}, {
-  message: 'Pilihan jurusan tidak boleh sama',
-  path: ['secondMajor']
+  selectedMajor: z.string()
+    .min(1, 'Pilihan jurusan harus dipilih')
 })
 
 // Document Data Schema
@@ -199,6 +207,10 @@ const achievementLevels = z.enum(['none', 'sekolah', 'kecamatan', 'kabupaten', '
 
 // Ranking Data Schema
 export const rankingDataSchema = z.object({
+  mathScore: z.number()
+    .min(0, 'Nilai Matematika minimal 0')
+    .max(100, 'Nilai Matematika maksimal 100'),
+  
   indonesianScore: z.number()
     .min(0, 'Nilai Bahasa Indonesia minimal 0')
     .max(100, 'Nilai Bahasa Indonesia maksimal 100'),
@@ -207,10 +219,6 @@ export const rankingDataSchema = z.object({
     .min(0, 'Nilai Bahasa Inggris minimal 0')
     .max(100, 'Nilai Bahasa Inggris maksimal 100'),
   
-  mathScore: z.number()
-    .min(0, 'Nilai Matematika minimal 0')
-    .max(100, 'Nilai Matematika maksimal 100'),
-  
   scienceScore: z.number()
     .min(0, 'Nilai IPA minimal 0')
     .max(100, 'Nilai IPA maksimal 100'),
@@ -218,7 +226,12 @@ export const rankingDataSchema = z.object({
   // Achievement levels (will be converted to scores)
   academicAchievement: achievementLevels.default('none'),
   nonAcademicAchievement: achievementLevels.default('none'),
-  certificateScore: achievementLevels.default('none')
+  certificateScore: achievementLevels.default('none'),
+  
+  // School accreditation
+  accreditation: z.enum(['A', 'B', 'C', 'Belum Terakreditasi'], {
+    errorMap: () => ({ message: 'Akreditasi sekolah harus dipilih' })
+  })
 })
 
 // Complete Student Data Schema
@@ -249,7 +262,7 @@ export const studentUpdateSchema = z.object({
   city: z.string().min(2).max(50).optional(),
   province: z.string().min(2).max(50).optional(),
   postalCode: z.string().regex(postalCodeRegex).optional(),
-  phone: z.string().regex(phoneRegex).optional(),
+  phoneNumber: z.string().regex(phoneRegex).optional(),
   email: z.string().regex(emailRegex).optional(),
   
   // Parent data

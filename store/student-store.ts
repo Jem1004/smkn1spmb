@@ -24,7 +24,6 @@ interface StudentActions {
 const initialFormData: Partial<CompleteStudentFormData> = {
   // Personal Data
   fullName: '',
-  nickname: '',
   birthPlace: '',
   birthDate: '',
   gender: undefined,
@@ -35,7 +34,7 @@ const initialFormData: Partial<CompleteStudentFormData> = {
   city: '',
   province: '',
   postalCode: '',
-  phone: '',
+  phoneNumber: '',
   email: '',
   
   // Parent Data
@@ -45,20 +44,16 @@ const initialFormData: Partial<CompleteStudentFormData> = {
   fatherJob: '',
   motherJob: '',
   guardianJob: '',
-  fatherPhone: '',
-  motherPhone: '',
-  guardianPhone: '',
+  parentPhone: '',
   parentAddress: '',
   
   // Education Data
-  previousSchool: '',
+  schoolName: '',
   nisn: '',
   graduationYear: 0,
   
   // Major Choices
-  firstMajor: '',
-  secondMajor: '',
-  thirdMajor: '',
+  selectedMajor: '',
   
   // Documents
   hasIjazah: false,

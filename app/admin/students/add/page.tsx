@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth-store'
 import StudentFormWizard from '@/modules/students/components/StudentFormWizard'
+import AdminLayout from '@/components/AdminLayout'
+import { UserPlus, GraduationCap } from 'lucide-react'
 
 export default function AddStudentPage() {
   const router = useRouter()
@@ -27,9 +29,14 @@ export default function AddStudentPage() {
   }
 
   return (
-    <StudentFormWizard 
-      mode="create"
-      onCancel={() => router.push('/admin/dashboard')}
-    />
+    <AdminLayout>
+      <div className="space-y-8">
+        {/* Form */}
+        <StudentFormWizard 
+          mode="create"
+          onCancel={() => router.push('/admin/dashboard')}
+        />
+      </div>
+    </AdminLayout>
   )
 }

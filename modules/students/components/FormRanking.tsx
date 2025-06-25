@@ -7,8 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Calculator, Trophy, Award, BookOpen, Users, Target } from 'lucide-react'
-import { calculateTotalScore } from '@/lib/utils'
+import { Calculator, Trophy, Award, BookOpen, Users, Target, Info } from 'lucide-react'
 import { rankingDataSchema } from '@/lib/validations/student'
 import { useToast } from '@/hooks/use-toast'
 import { z } from 'zod'
@@ -108,7 +107,8 @@ export default function FormRanking({ data, onDataChange, onNext, onPrevious }: 
         scienceScore: formData.scienceScore || 0,
         academicAchievement: formData.academicAchievement || 'none',
         nonAcademicAchievement: formData.nonAcademicAchievement || 'none',
-        certificateScore: formData.certificateScore || 'none'
+        certificateScore: formData.certificateScore || 'none',
+        accreditation: formData.accreditation || 'Belum Terakreditasi'
       }
 
       rankingDataSchema.parse(dataToValidate)
@@ -152,6 +152,19 @@ export default function FormRanking({ data, onDataChange, onNext, onPrevious }: 
     return achievement ? achievement.points : 0
   }
 
+  const calculateAccreditationPoints = () => {
+    switch (formData.accreditation) {
+      case 'A':
+        return 10;
+      case 'B':
+        return 5;
+      case 'C':
+      case 'Belum Terakreditasi':
+      default:
+        return 0;
+    }
+  };
+
   const calculateScores = () => {
     const academicAverage = ACADEMIC_SCORES.reduce((sum, score) => {
       const value = formData[score.key] as number || 0
@@ -164,11 +177,13 @@ export default function FormRanking({ data, onDataChange, onNext, onPrevious }: 
       getAchievementPoints(formData.certificateScore as string)
     )
 
-    const totalScore = academicAverage + achievementPoints
+    const accreditationPoints = calculateAccreditationPoints()
+    const totalScore = academicAverage + achievementPoints + accreditationPoints
 
     return {
       academicAverage: Math.round(academicAverage * 100) / 100,
       achievementPoints,
+      accreditationPoints,
       totalScore: Math.round(totalScore * 100) / 100
     }
   }
@@ -291,13 +306,74 @@ export default function FormRanking({ data, onDataChange, onNext, onPrevious }: 
           </div>
         </div>
 
+        {/* Akreditasi Sekolah */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Award className="h-5 w-5 text-green-600" />
+            <h3 className="text-lg font-semibold">Akreditasi Sekolah Asal</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Pilih akreditasi sekolah asal (SMP/MTs) yang tertera pada ijazah
+          </p>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Akreditasi <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={formData.accreditation || ''}
+              onValueChange={(value) => handleInputChange('accreditation', value)}
+            >
+              <SelectTrigger className={errors.accreditation ? 'border-red-500' : ''}>
+                <SelectValue placeholder="Pilih akreditasi sekolah asal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="A">
+                  <div className="flex justify-between items-center w-full">
+                    <span>A (Sangat Baik)</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      (+10 poin)
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="B">
+                  <div className="flex justify-between items-center w-full">
+                    <span>B (Baik)</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      (+5 poin)
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="C">
+                  <div className="flex justify-between items-center w-full">
+                    <span>C (Cukup)</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      (+0 poin)
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="Belum Terakreditasi">
+                  <div className="flex justify-between items-center w-full">
+                    <span>Belum Terakreditasi</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      (+0 poin)
+                    </span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.accreditation && (
+              <p className="form-error text-xs">{errors.accreditation}</p>
+            )}
+          </div>
+        </div>
+
         {/* Score Summary */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg">
           <div className="flex items-center space-x-2 mb-4">
             <Target className="h-5 w-5 text-purple-600" />
             <h3 className="text-lg font-semibold text-purple-900">Ringkasan Penilaian</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-lg">
               <div className="text-sm text-muted-foreground">Rata-rata Akademik</div>
               <div className="text-2xl font-bold text-blue-600">
@@ -313,6 +389,13 @@ export default function FormRanking({ data, onDataChange, onNext, onPrevious }: 
               <div className="text-xs text-muted-foreground">poin bonus</div>
             </div>
             <div className="bg-white p-4 rounded-lg">
+              <div className="text-sm text-muted-foreground">Poin Akreditasi</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {scores.accreditationPoints}
+              </div>
+              <div className="text-xs text-muted-foreground">poin akreditasi</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg">
               <div className="text-sm text-muted-foreground">Total Skor</div>
               <div className="text-2xl font-bold text-purple-600">
                 {scores.totalScore.toFixed(1)}
@@ -323,13 +406,57 @@ export default function FormRanking({ data, onDataChange, onNext, onPrevious }: 
         </div>
 
         {/* Scoring Information */}
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="font-semibold text-gray-900 mb-2">Informasi Penilaian</h3>
-          <div className="text-sm text-gray-700 space-y-1">
-            <p>• Nilai akademik dihitung berdasarkan rata-rata tertimbang (25% per mata pelajaran)</p>
-            <p>• Prestasi memberikan poin bonus sesuai tingkat pencapaian</p>
-            <p>• Skor total = Rata-rata akademik + Poin prestasi</p>
-            <p>• Ranking ditentukan berdasarkan skor total tertinggi</p>
+        <div className="bg-gray-50 p-6 rounded-lg">
+          <div className="flex items-center space-x-2 mb-4">
+            <Target className="h-5 w-5 text-gray-600" />
+            <h3 className="text-lg font-semibold">Informasi Penilaian</h3>
+          </div>
+          <div className="space-y-3 text-sm text-gray-600">
+            <div className="flex items-start space-x-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <strong>Nilai Akademik:</strong> Rata-rata dari nilai Matematika, Bahasa Indonesia, 
+                Bahasa Inggris, dan IPA (skala 0-100)
+              </div>
+            </div>
+            <div className="flex items-start space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <strong>Prestasi:</strong> Poin tambahan berdasarkan prestasi akademik dan non-akademik
+                <ul className="mt-1 ml-4 space-y-1">
+                  <li>• Internasional: 30 poin</li>
+                  <li>• Nasional: 25 poin</li>
+                  <li>• Provinsi: 20 poin</li>
+                  <li>• Kabupaten/Kota: 15 poin</li>
+                  <li>• Kecamatan: 10 poin</li>
+                  <li>• Sekolah: 5 poin</li>
+                </ul>
+              </div>
+            </div>
+            <div className="flex items-start space-x-2">
+              <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <strong>Akreditasi:</strong> Poin tambahan berdasarkan akreditasi sekolah asal
+                <ul className="mt-1 ml-4 space-y-1">
+                  <li>• Akreditasi A: 10 poin</li>
+                  <li>• Akreditasi B: 5 poin</li>
+                  <li>• Akreditasi C: 0 poin</li>
+                  <li>• Belum Terakreditasi: 0 poin</li>
+                </ul>
+              </div>
+            </div>
+            <div className="flex items-start space-x-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <strong>Total Skor:</strong> Rata-rata akademik + poin prestasi + poin akreditasi
+              </div>
+            </div>
+            <div className="flex items-start space-x-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <strong>Ranking:</strong> Urutan berdasarkan total skor tertinggi per jurusan
+              </div>
+            </div>
           </div>
         </div>
 

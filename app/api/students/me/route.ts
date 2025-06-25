@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { authenticateRequest, requireRole } from '@/lib/auth'
 
 // GET /api/students/me - Get current student's data
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate and check student role
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
     // Check if user is student
-    if (authResult.user!.role !== 'STUDENT') {
+    if (session.user.role !== 'STUDENT') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya siswa yang dapat mengakses.' },
         { status: 403 }
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Get student data with ranking
     const student = await prisma.student.findUnique({
       where: {
-        userId: authResult.user!.id
+        userId: session.user.id
       },
       include: {
         ranking: true,
@@ -62,17 +64,18 @@ export async function GET(request: NextRequest) {
 // PUT /api/students/me - Update current student's data (limited fields)
 export async function PUT(request: NextRequest) {
   try {
-    // Authenticate and check student role
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
     // Check if user is student
-    if (authResult.user!.role !== 'STUDENT') {
+    if (session.user.role !== 'STUDENT') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya siswa yang dapat mengakses.' },
         { status: 403 }
@@ -110,7 +113,7 @@ export async function PUT(request: NextRequest) {
     // Update student data
     const updatedStudent = await prisma.student.update({
       where: {
-        userId: authResult.user!.id
+        userId: session.user.id
       },
       data: updateData,
       include: {

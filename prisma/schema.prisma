@@ -30,46 +30,50 @@ model Student {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Data Personal
-  fullName    String
-  nickname    String?
-  birthPlace  String
-  birthDate   DateTime
-  gender      Gender
-  religion    String
-  nationality String
-  address     String
-  rt          String?
-  rw          String?
-  village     String
-  district    String
-  city        String
-  province    String
-  postalCode  String
-  phone       String?
-  email       String?
+  // Data Pribadi
+  fullName      String
+  birthPlace    String
+  birthDate     DateTime
+  gender        Gender
+  religion      String
+  nationality   String   @default("Indonesia")
+  address       String
+  rt            String?
+  rw            String?
+  village       String?
+  district      String
+  city          String
+  province      String
+  postalCode    String
+  phoneNumber   String?
+  email         String?
+  childOrder    Int      @default(1)
+  totalSiblings Int      @default(1)
+  height        Float?   @default(0)
+  weight        Float?   @default(0)
+  medicalHistory String?
 
   // Data Orang Tua/Wali
-  fatherName    String
-  fatherJob     String?
-  fatherPhone   String?
-  motherName    String
-  motherJob     String?
-  motherPhone   String?
-  guardianName  String?
-  guardianJob   String?
-  guardianPhone String?
-  parentAddress String?
+  fatherName       String
+  fatherJob        String?
+  fatherEducation  String?
+  motherName       String
+  motherJob        String?
+  motherEducation  String?
+  guardianName     String?
+  guardianJob      String?
+  parentPhone      String?
+  parentAddress    String?
 
   // Data Pendidikan
-  previousSchool String
-  nisn           String? @unique
-  graduationYear Int
+  schoolName       String
+  npsn             String?
+  nisn             String? @unique
+  graduationYear   Int
+  certificateNumber String?
 
   // Pilihan Jurusan
-  firstMajor  String
-  secondMajor String?
-  thirdMajor  String?
+  selectedMajor    String
 
   // Status Dokumen
   hasIjazah     Boolean @default(false)
@@ -98,14 +102,16 @@ model Ranking {
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   // Nilai Akademik
+  mathScore       Float @default(0)
   indonesianScore Float @default(0)
   englishScore    Float @default(0)
-  mathScore       Float @default(0)
   scienceScore    Float @default(0)
 
-  // Nilai Tambahan
-  certificateScore Float @default(0)
-  achievementScore Float @default(0)
+  // Prestasi dan Sertifikat
+  academicAchievement    String @default("none")
+  nonAcademicAchievement String @default("none")
+  certificateScore       String @default("none")
+  accreditation          String @default("Belum Terakreditasi")
 
   // Total dan Ranking
   totalScore Float @default(0)

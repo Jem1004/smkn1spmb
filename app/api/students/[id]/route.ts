@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { authenticateRequest, requireRole } from '@/lib/auth'
 import { CompleteStudentFormData } from '@/types'
-import { calculateTotalScore } from '@/lib/utils'
+import { calculateTotalScore, updateAllRankings } from '@/lib/utils'
 
 // GET /api/students/[id] - Get student by ID (Admin only)
 export async function GET(
@@ -10,17 +11,18 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Authenticate and check admin role
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
     // Check if user is admin
-    if (authResult.user!.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya admin yang dapat mengakses.' },
         { status: 403 }
@@ -68,17 +70,18 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Authenticate and check admin role
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
     // Check if user is admin
-    if (authResult.user!.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya admin yang dapat mengakses.' },
         { status: 403 }
@@ -121,42 +124,48 @@ export async function PUT(
         data: {
           // Personal data
           fullName: body.fullName,
-          nickname: body.nickname,
           birthPlace: body.birthPlace,
           birthDate: body.birthDate ? new Date(body.birthDate) : undefined,
           gender: body.gender,
           religion: body.religion,
           nationality: body.nationality,
           address: body.address,
+          rt: body.rt,
+          rw: body.rw,
           village: body.village,
           district: body.district,
           city: body.city,
           province: body.province,
           postalCode: body.postalCode,
-          phone: body.phone,
+          phoneNumber: body.phoneNumber,
           email: body.email,
-          
+          childOrder: body.childOrder,
+          totalSiblings: body.totalSiblings,
+          height: body.height,
+          weight: body.weight,
+          medicalHistory: body.medicalHistory,
+         
           // Parent data
           fatherName: body.fatherName,
           fatherJob: body.fatherJob,
-          fatherPhone: body.fatherPhone,
+          fatherEducation: body.fatherEducation,
           motherName: body.motherName,
           motherJob: body.motherJob,
-          motherPhone: body.motherPhone,
+          motherEducation: body.motherEducation,
           guardianName: body.guardianName,
           guardianJob: body.guardianJob,
-          guardianPhone: body.guardianPhone,
+          parentPhone: body.parentPhone,
           parentAddress: body.parentAddress,
           
           // Education data
-          previousSchool: body.previousSchool,
+          schoolName: body.schoolName,
+          npsn: body.npsn,
           nisn: body.nisn,
           graduationYear: body.graduationYear,
+          certificateNumber: body.certificateNumber,
           
-          // Major choices
-          firstMajor: body.firstMajor,
-          secondMajor: body.secondMajor,
-          thirdMajor: body.thirdMajor,
+          // Major choice
+          selectedMajor: body.selectedMajor,
           
           // Documents
           hasIjazah: body.hasIjazah,
@@ -181,7 +190,8 @@ export async function PUT(
           scienceScore: body.ranking.scienceScore,
           academicAchievement: body.ranking.academicAchievement,
           nonAcademicAchievement: body.ranking.nonAcademicAchievement,
-          certificateScore: body.ranking.certificateScore
+          certificateScore: body.ranking.certificateScore,
+          accreditation: body.ranking.accreditation
         })
 
         await tx.ranking.upsert({
@@ -192,8 +202,10 @@ export async function PUT(
             englishScore: body.ranking.englishScore,
             mathScore: body.ranking.mathScore,
             scienceScore: body.ranking.scienceScore,
-            certificateScore: parseInt(body.ranking.certificateScore) || 0,
-            achievementScore: 0, // Calculate from achievements
+            academicAchievement: body.ranking.academicAchievement || 'none',
+            nonAcademicAchievement: body.ranking.nonAcademicAchievement || 'none',
+            certificateScore: body.ranking.certificateScore || 'none',
+            accreditation: body.ranking.accreditation || '',
             totalScore,
             rank: 0 // Will be calculated later
           },
@@ -202,9 +214,12 @@ export async function PUT(
             englishScore: body.ranking.englishScore,
             mathScore: body.ranking.mathScore,
             scienceScore: body.ranking.scienceScore,
-            certificateScore: parseInt(body.ranking.certificateScore) || 0,
-            achievementScore: 0, // Calculate from achievements
-            totalScore
+            academicAchievement: body.ranking.academicAchievement || 'none',
+            nonAcademicAchievement: body.ranking.nonAcademicAchievement || 'none',
+            certificateScore: body.ranking.certificateScore || 'none',
+            accreditation: body.ranking.accreditation || 'Belum Terakreditasi',
+            totalScore,
+            rank: 0 // Will be calculated later
           }
         })
       }
@@ -250,17 +265,18 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Authenticate and check admin role
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
     // Check if user is admin
-    if (authResult.user!.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya admin yang dapat mengakses.' },
         { status: 403 }
@@ -310,27 +326,5 @@ export async function DELETE(
       { error: 'Internal server error' },
       { status: 500 }
     )
-  }
-}
-
-// Helper function to update all rankings
-async function updateAllRankings() {
-  try {
-    // Get all rankings ordered by total score
-    const rankings = await prisma.ranking.findMany({
-      orderBy: { totalScore: 'desc' }
-    })
-
-    // Update rank for each ranking
-    const updatePromises = rankings.map((ranking, index) => 
-      prisma.ranking.update({
-        where: { id: ranking.id },
-        data: { rank: index + 1 }
-      })
-    )
-
-    await Promise.all(updatePromises)
-  } catch (error) {
-    console.error('Error updating rankings:', error)
   }
 }

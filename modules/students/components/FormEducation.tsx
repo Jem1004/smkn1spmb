@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { educationDataSchema, type EducationData } from '@/lib/validations/student'
+import { educationDataSchema } from '@/lib/validations/student'
 import { useToast } from '@/hooks/use-toast'
 import { z } from 'zod'
 
@@ -45,7 +45,9 @@ export default function FormEducation({ data = {}, onDataChange, onNext, onPrevi
       // Convert formData to match schema expectations
       const dataToValidate = {
         ...formData,
-        nisn: formData.nisn || ''
+        nisn: formData.nisn || '',
+        npsn: formData.npsn || '',
+        certificateNumber: formData.certificateNumber || ''
       }
       
       educationDataSchema.parse(dataToValidate)
@@ -91,60 +93,106 @@ export default function FormEducation({ data = {}, onDataChange, onNext, onPrevi
         <CardTitle>Data Pendidikan</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="form-field">
-          <Label htmlFor="previousSchool" className="form-label">
-            Asal Sekolah (SMP/MTs) *
-          </Label>
-          <Input
-            id="previousSchool"
-            value={formData.previousSchool || ''}
-            onChange={(e) => handleInputChange('previousSchool', e.target.value)}
-            placeholder="Masukkan nama sekolah asal (contoh: SMP Negeri 1 Jakarta)"
-          />
-          {errors.previousSchool && <p className="form-error">{errors.previousSchool}</p>}
-          <p className="text-sm text-muted-foreground mt-1">
-            Tuliskan nama lengkap sekolah asal beserta kota/kabupaten
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-field">
-            <Label htmlFor="nisn" className="form-label">
-              NISN (Nomor Induk Siswa Nasional)
+        {/* Informasi Sekolah Asal */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <span>Informasi Sekolah Asal</span>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="schoolName" className="text-sm font-medium">
+                Nama Sekolah Asal <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="schoolName"
+                value={formData.schoolName || ''}
+                onChange={(e) => handleInputChange('schoolName', e.target.value)}
+                placeholder="Masukkan nama sekolah asal"
+                className={errors.schoolName ? 'border-red-500' : ''}
+              />
+              {errors.schoolName && (
+                <p className="form-error text-xs">{errors.schoolName}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="npsn" className="text-sm font-medium">
+                NPSN Sekolah Asal <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="npsn"
+                value={formData.npsn || ''}
+                onChange={(e) => handleInputChange('npsn', e.target.value)}
+                placeholder="Masukkan NPSN (8 digit)"
+                maxLength={8}
+                className={errors.npsn ? 'border-red-500' : ''}
+              />
+              {errors.npsn && (
+                <p className="form-error text-xs">{errors.npsn}</p>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nisn" className="text-sm font-medium">
+                NISN <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="nisn"
+                value={formData.nisn || ''}
+                onChange={(e) => handleInputChange('nisn', e.target.value)}
+                placeholder="Masukkan NISN (10 digit)"
+                maxLength={10}
+                className={errors.nisn ? 'border-red-500' : ''}
+              />
+              {errors.nisn && (
+                <p className="form-error text-xs">{errors.nisn}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="graduationYear" className="text-sm font-medium">
+                Tahun Kelulusan <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.graduationYear?.toString() || ''}
+                onValueChange={(value) => handleInputChange('graduationYear', parseInt(value))}
+              >
+                <SelectTrigger className={errors.graduationYear ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="Pilih tahun kelulusan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 2030 - 2000 + 1 }, (_, i) => {
+                    const year = 2000 + i
+                    return (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+              {errors.graduationYear && (
+                <p className="form-error text-xs">{errors.graduationYear}</p>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="certificateNumber" className="text-sm font-medium">
+              Nomor Ijazah/SKL <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="nisn"
-              value={formData.nisn || ''}
-              onChange={(e) => handleInputChange('nisn', e.target.value)}
-              placeholder="1234567890"
-              maxLength={10}
+              id="certificateNumber"
+              value={formData.certificateNumber || ''}
+              onChange={(e) => handleInputChange('certificateNumber', e.target.value)}
+              placeholder="Masukkan nomor ijazah atau SKL"
+              className={errors.certificateNumber ? 'border-red-500' : ''}
             />
-            {errors.nisn && <p className="form-error">{errors.nisn}</p>}
-            <p className="text-sm text-muted-foreground mt-1">
-              NISN terdiri dari 10 digit angka (opsional)
+            <p className="text-xs text-muted-foreground">
+              Nomor yang tertera pada ijazah atau Surat Keterangan Lulus (SKL)
             </p>
-          </div>
-
-          <div className="form-field">
-            <Label htmlFor="graduationYear" className="form-label">
-              Tahun Lulus *
-            </Label>
-            <Select
-              value={formData.graduationYear?.toString() || ''}
-              onValueChange={(value) => handleInputChange('graduationYear', parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih tahun lulus" />
-              </SelectTrigger>
-              <SelectContent>
-                {yearOptions.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.graduationYear && <p className="form-error">{errors.graduationYear}</p>}
+            {errors.certificateNumber && (
+              <p className="form-error text-xs">{errors.certificateNumber}</p>
+            )}
           </div>
         </div>
 

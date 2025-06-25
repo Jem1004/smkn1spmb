@@ -14,6 +14,8 @@ interface AuthActions {
   logout: () => void
   setLoading: (loading: boolean) => void
   updateUser: (user: Partial<User>) => void
+  verifyToken: () => Promise<boolean>
+  initializeAuth: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -40,12 +42,21 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       },
 
       logout: () => {
+        // Clear all auth state
         set({
           user: null,
           token: null,
           isAuthenticated: false,
           isLoading: false
         })
+        
+        // Clear localStorage
+        localStorage.removeItem('auth-storage')
+        
+        // Redirect to login page
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login'
+        }
       },
 
       setLoading: (loading: boolean) => {
@@ -58,6 +69,53 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           set({
             user: { ...currentUser, ...userData }
           })
+        }
+      },
+
+      verifyToken: async () => {
+        const { token, user } = get()
+        if (!token || !user) {
+          return false
+        }
+
+        try {
+          const endpoint = user.role === 'STUDENT' ? '/api/students/me' : '/api/auth/verify'
+          const response = await fetch(endpoint, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+
+          if (response.ok) {
+            return true
+          } else {
+            // Token tidak valid, logout
+            get().logout()
+            return false
+          }
+        } catch (error) {
+          console.error('Token verification failed:', error)
+          get().logout()
+          return false
+        }
+      },
+
+      initializeAuth: async () => {
+        const { token, user, isAuthenticated } = get()
+        
+        if (token && user && isAuthenticated) {
+          set({ isLoading: true })
+          const isValid = await get().verifyToken()
+          set({ isLoading: false })
+          
+          if (!isValid) {
+            console.log('Token expired or invalid, user logged out')
+            // Clear localStorage to prevent infinite loops
+            localStorage.removeItem('auth-storage')
+          }
+        } else {
+          // If no valid session data, ensure clean state
+          set({ isLoading: false })
         }
       }
     }),

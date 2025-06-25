@@ -82,6 +82,7 @@ export function calculateTotalScore(data: {
   academicAchievement?: string
   nonAcademicAchievement?: string
   certificateScore?: string
+  accreditation?: string
 }): number {
   const academicAverage = (
     (data.mathScore || 0) * 0.25 +
@@ -102,13 +103,25 @@ export function calculateTotalScore(data: {
     }
   }
   
+  const getAccreditationPoints = (accreditation: string): number => {
+    switch (accreditation) {
+      case 'A': return 10
+      case 'B': return 5
+      case 'C':
+      case 'Belum Terakreditasi':
+      default: return 0
+    }
+  }
+  
   const achievementPoints = (
     getAchievementPoints(data.academicAchievement || 'none') +
     getAchievementPoints(data.nonAcademicAchievement || 'none') +
     getAchievementPoints(data.certificateScore || 'none')
   )
   
-  return Math.round((academicAverage + achievementPoints) * 100) / 100
+  const accreditationPoints = getAccreditationPoints(data.accreditation || 'Belum Terakreditasi')
+  
+  return Math.round((academicAverage + achievementPoints + accreditationPoints) * 100) / 100
 }
 
 // Generate username from full name
@@ -148,4 +161,28 @@ export async function hashPassword(password: string): Promise<string> {
 // Verify password
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   return await bcrypt.compare(password, hashedPassword)
+}
+
+// Update all rankings helper function
+export async function updateAllRankings() {
+  const { prisma } = await import('@/lib/prisma')
+  
+  try {
+    // Get all rankings ordered by total score
+    const rankings = await prisma.ranking.findMany({
+      orderBy: { totalScore: 'desc' }
+    })
+
+    // Update rank for each ranking
+    const updatePromises = rankings.map((ranking, index) => 
+      prisma.ranking.update({
+        where: { id: ranking.id },
+        data: { rank: index + 1 }
+      })
+    )
+
+    await Promise.all(updatePromises)
+  } catch (error) {
+    console.error('Error updating rankings:', error)
+  }
 }

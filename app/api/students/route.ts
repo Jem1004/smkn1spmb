@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { authenticateRequest, requireRole } from '@/lib/auth'
 import { Student, CompleteStudentFormData } from '@/types'
-import { calculateTotalScore } from '@/lib/utils'
+import { calculateTotalScore, updateAllRankings } from '@/lib/utils'
 import { completeStudentSchema, studentUpdateSchema } from '@/lib/validations/student'
 import { z } from 'zod'
 
 // GET /api/students - Get all students (Admin only)
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate and check admin role
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
     // Check if user is admin
-    if (authResult.user!.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya admin yang dapat mengakses.' },
         { status: 403 }
@@ -42,14 +44,14 @@ export async function GET(request: NextRequest) {
     }
     
     if (major && major !== 'all') {
-      where.firstMajor = major
+      where.selectedMajor = major
     }
     
     if (search) {
       where.OR = [
         { fullName: { contains: search, mode: 'insensitive' } },
         { nisn: { contains: search, mode: 'insensitive' } },
-        { previousSchool: { contains: search, mode: 'insensitive' } }
+        { schoolName: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -98,17 +100,18 @@ export async function GET(request: NextRequest) {
 // POST /api/students - Create new student (Admin only)
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate and check admin role
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
     // Check if user is admin
-    if (authResult.user!.role !== 'ADMIN') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya admin yang dapat mengakses.' },
         { status: 403 }
@@ -140,7 +143,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if NISN already exists
-    if (body.education.nisn && body.education.nisn.trim() !== '') {
+    if (body.education?.nisn && body.education.nisn.trim() !== '') {
       const existingStudent = await prisma.student.findFirst({
         where: { nisn: body.education.nisn }
       })
@@ -176,42 +179,48 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           // Personal data
           fullName: body.personal.fullName,
-          nickname: body.personal.nickname || '',
           birthPlace: body.personal.birthPlace,
           birthDate: new Date(body.personal.birthDate),
           gender: body.personal.gender,
           religion: body.personal.religion,
           nationality: body.personal.nationality,
           address: body.personal.address,
-          village: body.personal.village,
+          rt: body.personal.rt || '',
+          rw: body.personal.rw || '',
+          village: body.personal.village || '',
           district: body.personal.district,
           city: body.personal.city,
           province: body.personal.province,
           postalCode: body.personal.postalCode,
-          phone: body.personal.phone || '',
+          phoneNumber: body.personal.phoneNumber || '',
           email: body.personal.email || '',
+          childOrder: body.personal.childOrder || 1,
+          totalSiblings: body.personal.totalSiblings || 1,
+          height: body.personal.height || 0,
+          weight: body.personal.weight || 0,
+          medicalHistory: body.personal.medicalHistory || '',
           
           // Parent data
           fatherName: body.parent.fatherName,
           fatherJob: body.parent.fatherJob || '',
-          fatherPhone: body.parent.fatherPhone || '',
+          fatherEducation: body.parent.fatherEducation || '',
           motherName: body.parent.motherName,
           motherJob: body.parent.motherJob || '',
-          motherPhone: body.parent.motherPhone || '',
+          motherEducation: body.parent.motherEducation || '',
           guardianName: body.parent.guardianName || '',
           guardianJob: body.parent.guardianJob || '',
-          guardianPhone: body.parent.guardianPhone || '',
+          parentPhone: body.parent.parentPhone || '',
           parentAddress: body.parent.parentAddress || '',
           
           // Education data
-          previousSchool: body.education.previousSchool,
+          schoolName: body.education.schoolName,
+          npsn: body.education.npsn || '',
           nisn: body.education.nisn || '',
           graduationYear: body.education.graduationYear,
+          certificateNumber: body.education.certificateNumber || '',
           
           // Major choices
-          firstMajor: body.major.firstMajor,
-          secondMajor: body.major.secondMajor || '',
-          thirdMajor: body.major.thirdMajor || '',
+          selectedMajor: body.major.selectedMajor,
           
           // Documents
           hasIjazah: body.documents?.hasIjazah || false,
@@ -228,44 +237,28 @@ export async function POST(request: NextRequest) {
 
       // Create ranking if provided
       if (body.ranking) {
-        // Convert achievement levels to scores
-        const getAchievementPoints = (level: string): number => {
-          const achievementLevels = {
-            'none': 0,
-            'sekolah': 5,
-            'kecamatan': 10,
-            'kabupaten': 15,
-            'provinsi': 20,
-            'nasional': 25,
-            'internasional': 30
-          }
-          return achievementLevels[level as keyof typeof achievementLevels] || 0
-        }
-
-        const certificateScore = getAchievementPoints(body.ranking.certificateScore)
-        const achievementScore = 
-          getAchievementPoints(body.ranking.academicAchievement) +
-          getAchievementPoints(body.ranking.nonAcademicAchievement)
-
         const totalScore = calculateTotalScore({
+          mathScore: body.ranking.mathScore,
           indonesianScore: body.ranking.indonesianScore,
           englishScore: body.ranking.englishScore,
-          mathScore: body.ranking.mathScore,
           scienceScore: body.ranking.scienceScore,
           academicAchievement: body.ranking.academicAchievement,
           nonAcademicAchievement: body.ranking.nonAcademicAchievement,
-          certificateScore: body.ranking.certificateScore
+          certificateScore: body.ranking.certificateScore,
+          accreditation: body.ranking.accreditation
         })
 
         await tx.ranking.create({
           data: {
             studentId: student.id,
+            mathScore: body.ranking.mathScore,
             indonesianScore: body.ranking.indonesianScore,
             englishScore: body.ranking.englishScore,
-            mathScore: body.ranking.mathScore,
             scienceScore: body.ranking.scienceScore,
-            certificateScore,
-            achievementScore,
+            academicAchievement: body.ranking.academicAchievement,
+            nonAcademicAchievement: body.ranking.nonAcademicAchievement,
+            certificateScore: body.ranking.certificateScore,
+            accreditation: body.ranking.accreditation,
             totalScore,
             rank: 0 // Will be calculated later
           }
@@ -289,27 +282,5 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
-  }
-}
-
-// Helper function to update all rankings
-async function updateAllRankings() {
-  try {
-    // Get all rankings ordered by total score
-    const rankings = await prisma.ranking.findMany({
-      orderBy: { totalScore: 'desc' }
-    })
-
-    // Update rank for each ranking
-    const updatePromises = rankings.map((ranking, index) => 
-      prisma.ranking.update({
-        where: { id: ranking.id },
-        data: { rank: index + 1 }
-      })
-    )
-
-    await Promise.all(updatePromises)
-  } catch (error) {
-    console.error('Error updating rankings:', error)
   }
 }

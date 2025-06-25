@@ -1,6 +1,9 @@
 import jwt from 'jsonwebtoken'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { NextAuthOptions } from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import bcrypt from 'bcryptjs'
 
 export interface JWTPayload {
   userId: string
@@ -77,4 +80,79 @@ export async function hashPassword(password: string): Promise<string> {
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
   const bcrypt = await import('bcryptjs')
   return bcrypt.compare(password, hash)
+}
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        username: { label: 'Username', type: 'text' },
+        password: { label: 'Password', type: 'password' },
+        role: { label: 'Role', type: 'text' }
+      },
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials?.password) {
+          throw new Error('Username dan password harus diisi')
+        }
+
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              username: credentials.username
+            }
+          })
+
+          if (!user) {
+            throw new Error('Username atau password salah')
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          )
+
+          if (!isPasswordValid) {
+            throw new Error('Username atau password salah')
+          }
+
+          // Return user object to be stored in session
+          return {
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            email: `${user.username}@smk.edu`,
+            name: user.username
+          }
+        } catch (error) {
+          console.error('Login error:', error)
+          throw new Error('Terjadi kesalahan saat login')
+        }
+      }
+    })
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+        token.username = user.username
+        token.role = user.role
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string
+        session.user.username = token.username as string
+        session.user.role = token.role as 'ADMIN' | 'STUDENT'
+      }
+      return session
+    }
+  },
+  pages: {
+    signIn: '/login'
+  },
+  session: {
+    strategy: 'jwt'
+  }
 }

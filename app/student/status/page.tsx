@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/store/auth-store'
+import { useSession } from 'next-auth/react'
 import { Student, StudentWithRanking } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,36 +21,41 @@ import {
   XCircle,
   Clock,
   Download,
-  RefreshCw
+  RefreshCw,
+  LogOut
 } from 'lucide-react'
 import { getRegistrationStatusText, getRegistrationStatusColor, formatDate, calculateAge } from '@/lib/utils'
 
-export default function StudentStatus() {
+export default function StudentStatusPage() {
   const router = useRouter()
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const { data: session, status } = useSession()
   const [student, setStudent] = useState<StudentWithRanking | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'STUDENT') {
+    // Don't redirect while still loading
+    if (status === 'loading') return
+    
+    if (status !== 'authenticated' || session?.user?.role !== 'STUDENT') {
       router.push('/login')
       return
     }
     
+    // Fetch student data
     fetchStudentData()
-  }, [isAuthenticated, user, router])
+  }, [session, status, router])
 
   const fetchStudentData = async () => {
     try {
-      setIsLoading(true)
+      setLoading(true)
       setError(null)
       
-      const response = await fetch('/api/students/me', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+      if (!session?.user?.id) {
+        throw new Error('User session not found')
+      }
+      
+      const response = await fetch('/api/students/me')
       
       if (!response.ok) {
         throw new Error('Failed to fetch student data')
@@ -61,13 +66,8 @@ export default function StudentStatus() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch student data')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
-  }
-
-  const handleLogout = () => {
-    logout()
-    router.push('/login')
   }
 
   const handleRefresh = () => {
@@ -111,7 +111,7 @@ export default function StudentStatus() {
     }
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -169,7 +169,12 @@ export default function StudentStatus() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={handleLogout} variant="outline">
+          <Button 
+            onClick={() => router.push('/student/logout')} 
+            variant="outline"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>
         </div>
@@ -251,7 +256,7 @@ export default function StudentStatus() {
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">No. HP</p>
-                    <p className="font-medium">{student.phone}</p>
+                    <p className="font-medium">{student.phoneNumber || '-'}</p>
                   </div>
                 </div>
                 {student.email && (
@@ -279,7 +284,7 @@ export default function StudentStatus() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Asal Sekolah</p>
-              <p className="font-medium">{student.previousSchool}</p>
+              <p className="font-medium">{student.schoolName}</p>
             </div>
             
             <div>
@@ -294,21 +299,9 @@ export default function StudentStatus() {
               </h3>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Pilihan 1:</span>
-                  <span className="font-medium">{student.firstMajor?.toUpperCase()}</span>
+                  <span className="text-sm">Jurusan Pilihan:</span>
+                  <span className="font-medium">{student.selectedMajor?.toUpperCase() || 'Belum dipilih'}</span>
                 </div>
-                {student.secondMajor && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Pilihan 2:</span>
-                    <span className="font-medium">{student.secondMajor.toUpperCase()}</span>
-                  </div>
-                )}
-                {student.thirdMajor && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Pilihan 3:</span>
-                    <span className="font-medium">{student.thirdMajor.toUpperCase()}</span>
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>
@@ -346,17 +339,11 @@ export default function StudentStatus() {
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-muted-foreground">No. HP Ayah</p>
-                  <p className="font-medium">{student.fatherPhone}</p>
+                  <p className="text-sm text-muted-foreground">No. HP Orang Tua</p>
+                  <p className="font-medium">{student.parentPhone || '-'}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">No. HP Ibu</p>
-                  <p className="font-medium">{student.motherPhone}</p>
-                </div>
-              </div>
+
             </div>
           </CardContent>
         </Card>

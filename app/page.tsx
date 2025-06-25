@@ -2,26 +2,29 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/store/auth-store'
+import { useSession } from 'next-auth/react'
 import { Card, CardContent } from '@/components/ui/card'
 
 export default function HomePage() {
   const router = useRouter()
-  const { isAuthenticated, user } = useAuthStore()
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    // Don't redirect while still loading
+    if (status === 'loading') return
+    
+    if (status === 'authenticated' && session?.user) {
       // Redirect berdasarkan role
-      if (user.role === 'ADMIN') {
+      if (session.user.role === 'ADMIN') {
         router.push('/admin/dashboard')
-      } else if (user.role === 'STUDENT') {
+      } else if (session.user.role === 'STUDENT') {
         router.push('/student/status')
       }
     } else {
       // Redirect ke login jika belum login
       router.push('/login')
     }
-  }, [isAuthenticated, user, router])
+  }, [session, status, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">

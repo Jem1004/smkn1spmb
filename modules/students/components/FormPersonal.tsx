@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { PersonalFormData } from '@/types'
+import { PersonalFormData, Gender } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { personalDataSchema, type PersonalData } from '@/lib/validations/student'
+import { personalDataSchema } from '@/lib/validations/student'
 import { useToast } from '@/hooks/use-toast'
 import { z } from 'zod'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -56,7 +56,7 @@ export default function FormPersonal({ data = {}, onDataChange, onNext, onPrevio
     setFormData(data || {})
   }, [data])
 
-  const handleInputChange = (field: keyof PersonalFormData, value: string) => {
+  const handleInputChange = (field: keyof PersonalFormData, value: string | number) => {
     const newData = { ...formData, [field]: value }
     setFormData(newData)
     if (onDataChange) {
@@ -69,17 +69,26 @@ export default function FormPersonal({ data = {}, onDataChange, onNext, onPrevio
     }
   }
 
+  const handleNumberChange = (field: keyof PersonalFormData, value: string) => {
+    const numValue = parseInt(value) || 0
+    handleInputChange(field, numValue)
+  }
+
   const validateForm = (): boolean => {
     try {
       // Convert formData to match schema expectations
       const dataToValidate = {
         ...formData,
         nationality: formData.nationality || 'Indonesia',
-        phone: formData.phone || '',
+        phoneNumber: formData.phoneNumber || '',
         email: formData.email || '',
-        nickname: formData.nickname || '',
         rt: formData.rt || '',
-        rw: formData.rw || ''
+        rw: formData.rw || '',
+        medicalHistory: formData.medicalHistory || '',
+        childOrder: formData.childOrder || 1,
+        totalSiblings: formData.totalSiblings || 0,
+        height: formData.height || 0,
+        weight: formData.weight || 0
       }
       
       personalDataSchema.parse(dataToValidate)
@@ -118,7 +127,7 @@ export default function FormPersonal({ data = {}, onDataChange, onNext, onPrevio
   }
 
   const calculateProgress = () => {
-    const requiredFields = ['fullName', 'birthPlace', 'birthDate', 'gender', 'religion', 'nationality', 'address', 'village', 'district', 'city', 'province', 'postalCode']
+    const requiredFields = ['fullName', 'birthPlace', 'birthDate', 'gender', 'religion', 'nationality', 'address', 'village', 'district', 'city', 'province', 'postalCode', 'phoneNumber', 'email', 'childOrder', 'totalSiblings', 'height', 'weight']
     const filledFields = requiredFields.filter(field => formData[field as keyof PersonalFormData])
     return (filledFields.length / requiredFields.length) * 100
   }
@@ -142,43 +151,20 @@ export default function FormPersonal({ data = {}, onDataChange, onNext, onPrevio
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-field">
-            <Label htmlFor="fullName" className="form-label">
-              Nama Lengkap *
-            </Label>
-            <div className="relative">
-              <Input
-                id="fullName"
-                value={formData.fullName || ''}
-                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                placeholder="Masukkan nama lengkap"
-                className={`pr-10 ${
-                  getFieldStatus('fullName') === 'error' ? 'border-red-500' :
-                  getFieldStatus('fullName') === 'success' ? 'border-green-500' : ''
-                }`}
-              />
-              {getFieldStatus('fullName') === 'success' && (
-                <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-green-500" />
-              )}
-              {getFieldStatus('fullName') === 'error' && (
-                <XCircle className="absolute right-3 top-3 h-4 w-4 text-red-500" />
-              )}
-            </div>
-            {errors.fullName && <p className="form-error">{errors.fullName}</p>}
-          </div>
-
-          <div className="form-field">
-            <Label htmlFor="nickname" className="form-label">
-              Nama Panggilan
-            </Label>
-            <Input
-              id="nickname"
-              value={formData.nickname || ''}
-              onChange={(e) => handleInputChange('nickname', e.target.value)}
-              placeholder="Masukkan nama panggilan"
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="fullName" className="text-sm font-medium">
+            Nama Lengkap <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="fullName"
+            value={formData.fullName || ''}
+            onChange={(e) => handleInputChange('fullName', e.target.value)}
+            placeholder="Masukkan nama lengkap"
+            className={errors.fullName ? 'border-red-500' : ''}
+          />
+          {errors.fullName && (
+            <p className="form-error text-xs">{errors.fullName}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -216,7 +202,7 @@ export default function FormPersonal({ data = {}, onDataChange, onNext, onPrevio
             </Label>
             <Select
               value={formData.gender || ''}
-              onValueChange={(value) => handleInputChange('gender', value as 'MALE' | 'FEMALE')}
+              onValueChange={(value) => handleInputChange('gender', value as Gender)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih jenis kelamin" />
@@ -382,31 +368,132 @@ export default function FormPersonal({ data = {}, onDataChange, onNext, onPrevio
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-field">
-            <Label htmlFor="phone" className="form-label">
-              Nomor Telepon
+          <div className="space-y-2">
+            <Label htmlFor="childOrder" className="text-sm font-medium">
+              Anak ke- <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="phone"
-              value={formData.phone || ''}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="08123456789"
+              id="childOrder"
+              type="number"
+              min="1"
+              value={formData.childOrder || ''}
+              onChange={(e) => handleNumberChange('childOrder', e.target.value)}
+              placeholder="Contoh: 1"
+              className={errors.childOrder ? 'border-red-500' : ''}
             />
-            {errors.phone && <p className="form-error">{errors.phone}</p>}
+            {errors.childOrder && (
+              <p className="form-error text-xs">{errors.childOrder}</p>
+            )}
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="totalSiblings" className="text-sm font-medium">
+              Dari berapa bersaudara <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="totalSiblings"
+              type="number"
+              min="1"
+              value={formData.totalSiblings || ''}
+              onChange={(e) => handleNumberChange('totalSiblings', e.target.value)}
+              placeholder="Contoh: 3"
+              className={errors.totalSiblings ? 'border-red-500' : ''}
+            />
+            {errors.totalSiblings && (
+              <p className="form-error text-xs">{errors.totalSiblings}</p>
+            )}
+          </div>
+        </div>
 
-          <div className="form-field">
-            <Label htmlFor="email" className="form-label">
-              Email
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="height" className="text-sm font-medium">
+              Tinggi Badan (cm) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="height"
+              type="number"
+              min="100"
+              max="250"
+              value={formData.height || ''}
+              onChange={(e) => handleNumberChange('height', e.target.value)}
+              placeholder="Contoh: 165"
+              className={errors.height ? 'border-red-500' : ''}
+            />
+            {errors.height && (
+              <p className="form-error text-xs">{errors.height}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="weight" className="text-sm font-medium">
+              Berat Badan (kg) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="weight"
+              type="number"
+              min="20"
+              max="200"
+              value={formData.weight || ''}
+              onChange={(e) => handleNumberChange('weight', e.target.value)}
+              placeholder="Contoh: 55"
+              className={errors.weight ? 'border-red-500' : ''}
+            />
+            {errors.weight && (
+              <p className="form-error text-xs">{errors.weight}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="medicalHistory" className="text-sm font-medium">
+            Riwayat Penyakit
+          </Label>
+          <Input
+            id="medicalHistory"
+            value={formData.medicalHistory || ''}
+            onChange={(e) => handleInputChange('medicalHistory', e.target.value)}
+            placeholder="Tuliskan riwayat penyakit jika ada, atau tulis 'Tidak ada'"
+            className={errors.medicalHistory ? 'border-red-500' : ''}
+          />
+          <p className="text-xs text-muted-foreground">
+            Kosongkan jika tidak ada riwayat penyakit khusus
+          </p>
+          {errors.medicalHistory && (
+            <p className="form-error text-xs">{errors.medicalHistory}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber" className="text-sm font-medium">
+              Nomor Telepon <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              value={formData.phoneNumber || ''}
+              onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+              placeholder="Contoh: 08123456789"
+              className={errors.phoneNumber ? 'border-red-500' : ''}
+            />
+            {errors.phoneNumber && (
+              <p className="form-error text-xs">{errors.phoneNumber}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium">
+              Email <span className="text-red-500">*</span>
             </Label>
             <Input
               id="email"
               type="email"
               value={formData.email || ''}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="nama@email.com"
+              placeholder="contoh@email.com"
+              className={errors.email ? 'border-red-500' : ''}
             />
-            {errors.email && <p className="form-error">{errors.email}</p>}
+            {errors.email && (
+              <p className="form-error text-xs">{errors.email}</p>
+            )}
           </div>
         </div>
 
