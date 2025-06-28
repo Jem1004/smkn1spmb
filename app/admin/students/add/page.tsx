@@ -1,23 +1,17 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/store/auth-store'
+import { useSession } from 'next-auth/react'
 import StudentFormWizard from '@/modules/students/components/StudentFormWizard'
 import AdminLayout from '@/components/AdminLayout'
 import { UserPlus, GraduationCap } from 'lucide-react'
 
 export default function AddStudentPage() {
   const router = useRouter()
-  const { user, isAuthenticated } = useAuthStore()
+  const { data: session, status } = useSession()
 
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'ADMIN') {
-      router.push('/login')
-    }
-  }, [isAuthenticated, user, router])
-
-  if (!isAuthenticated || user?.role !== 'ADMIN') {
+  // AdminLayout sudah menangani autentikasi, jadi tidak perlu useEffect redirect di sini
+  if (status === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

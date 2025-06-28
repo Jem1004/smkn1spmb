@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/store/auth-store'
+import { useSession } from 'next-auth/react'
 import {
   PersonalFormData,
   ParentFormData,
@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { CheckCircle, Circle, ArrowLeft, ArrowRight, Save, Send } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { authFetch } from '@/hooks/use-auth'
 import FormPersonal from './FormPersonal'
 import FormParent from './FormParent'
 import FormEducation from './FormEducation'
@@ -93,7 +92,7 @@ export default function StudentFormWizard({
 }: StudentFormWizardProps) {
   const router = useRouter()
   const { toast } = useToast()
-  // Authentication handled by authFetch
+  const { data: session } = useSession()
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
@@ -234,11 +233,20 @@ export default function StudentFormWizard({
       }
 
       if (onSubmit) {
+        // Helper function to format birth date as DDMMYYYY
+        const formatBirthDateAsPassword = (birthDate: string): string => {
+          const date = new Date(birthDate)
+          const day = date.getDate().toString().padStart(2, '0')
+          const month = (date.getMonth() + 1).toString().padStart(2, '0')
+          const year = date.getFullYear().toString()
+          return `${day}${month}${year}`
+        }
+
         // For custom submit handler, pass flattened data
         const flattenedData = {
           // Authentication fields
           username: formData.education.nisn,
-          password: formData.personal.birthDate,
+          password: formatBirthDateAsPassword(formData.personal.birthDate),
           
           // All other fields flattened
           ...formData.personal,
@@ -258,12 +266,21 @@ export default function StudentFormWizard({
 
         const method = mode === 'edit' ? 'PUT' : 'POST'
 
+        // Helper function to format birth date as DDMMYYYY
+        const formatBirthDateAsPassword = (birthDate: string): string => {
+          const date = new Date(birthDate)
+          const day = date.getDate().toString().padStart(2, '0')
+          const month = (date.getMonth() + 1).toString().padStart(2, '0')
+          const year = date.getFullYear().toString()
+          return `${day}${month}${year}`
+        }
+
         // Prepare data in the correct flat structure for API
         const submitData: any = {
           // Authentication fields (only for create mode)
           ...(mode === 'create' && {
             username: formData.education.nisn, // Username = NISN
-            password: formData.personal.birthDate // Password = birth date
+            password: formatBirthDateAsPassword(formData.personal.birthDate) // Password = birth date in DDMMYYYY format
           }),
           
           // Personal data (flattened)
@@ -324,8 +341,13 @@ export default function StudentFormWizard({
           ranking: formData.ranking
         }
 
-        const response = await authFetch(endpoint, {
+        const response = await fetch(endpoint, {
           method,
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': session?.user?.id || '',
+            'x-user-role': session?.user?.role || ''
+          },
           body: JSON.stringify(submitData)
         })
 

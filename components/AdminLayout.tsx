@@ -3,27 +3,16 @@
 import React from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Header from './Header'
+import AdminHeader from './AdminHeader'
 import Sidebar from './Sidebar'
 import { cn } from '@/lib/utils'
 
 interface AdminLayoutProps {
   children: React.ReactNode
-  title?: string
-  subtitle?: string
-  showBackButton?: boolean
-  backUrl?: string
   className?: string
 }
 
-export default function AdminLayout({
-  children,
-  title,
-  subtitle,
-  showBackButton = false,
-  backUrl = '/admin/students',
-  className
-}: AdminLayoutProps) {
+export default function AdminLayout({ children, className }: AdminLayoutProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
@@ -40,6 +29,9 @@ export default function AdminLayout({
       return
     }
   }, [session, status, router])
+
+  // Check if current user is admin
+  const isAdmin = session?.user?.role === 'ADMIN'
 
   // Handle responsive behavior
   React.useEffect(() => {
@@ -90,49 +82,47 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Overlay */}
-      {isMobile && sidebarOpen && (
+      {/* Mobile Overlay - hanya untuk admin */}
+      {isAdmin && isMobile && sidebarOpen && (
         <div 
           className="fixed inset-0 z-30 bg-black/50 lg:hidden" 
           onClick={closeMobileSidebar}
         />
       )}
 
-      {/* Sidebar */}
-      <div className={cn(
-        "lg:block",
-        isMobile ? (
-          sidebarOpen ? "block" : "hidden"
-        ) : "block"
-      )}>
-        <Sidebar 
-          isCollapsed={!isMobile && sidebarCollapsed}
-          onToggle={toggleSidebar}
-          className={cn(
-            isMobile && "z-40"
-          )}
-        />
-      </div>
+      {/* Sidebar - hanya untuk admin */}
+      {isAdmin && (
+        <div className={cn(
+          "lg:block",
+          isMobile ? (
+            sidebarOpen ? "block" : "hidden"
+          ) : "block"
+        )}>
+          <Sidebar 
+            isCollapsed={!isMobile && sidebarCollapsed}
+            onToggle={toggleSidebar}
+            className={cn(
+              isMobile && "z-40"
+            )}
+          />
+        </div>
+      )}
 
       {/* Main Content */}
       <div className={cn(
         "transition-all duration-300 ease-in-out",
-        isMobile ? "ml-0" : (
-          sidebarCollapsed ? "ml-16" : "ml-64"
-        )
+        isAdmin ? (
+          isMobile ? "ml-0" : (
+            sidebarCollapsed ? "ml-16" : "ml-64"
+          )
+        ) : "ml-0"
       )}>
-        {/* Header */}
-        <Header 
-          title={title}
-          subtitle={subtitle}
-          showBackButton={showBackButton}
-          backUrl={backUrl}
-          onMenuToggle={isMobile ? toggleSidebar : undefined}
-        />
+        {/* Header - hanya untuk admin */}
+        {isAdmin && <AdminHeader onMenuToggle={toggleSidebar} />}
 
         {/* Page Content */}
         <main className={cn(
-          "p-6 min-h-[calc(100vh-4rem)]",
+          "p-4 sm:p-6 md:p-8 min-h-[calc(100vh-5rem)]",
           className
         )}>
           {children}

@@ -15,17 +15,14 @@ import {
 } from '@/components/ui/table';
 
 import { StudentDetailModal } from '@/components/ui/student-detail-modal';
-import { StudentEditModal } from '@/components/ui/student-edit-modal';
-import { StudentCreateModal } from '@/components/ui/student-create-modal';
 import { StudentWithRanking, StudentStatus } from '@/types';
 import { 
   Search, 
-  Trophy, 
+  Users, 
   CheckCircle, 
   Clock, 
   XCircle,
   RefreshCw,
-  Plus,
   Eye,
   Pencil,
   Trash
@@ -33,14 +30,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, authFetch } from '@/hooks/use-auth';
 import AdminLayout from '@/components/AdminLayout';
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 
-interface StudentsPageProps {}
-
-const StudentsPage = ({}: StudentsPageProps) => {
+const StudentsPage = () => {
   const router = useRouter();
   const { user, loading: authLoading, error: authError } = useAuth('ADMIN');
-    const [students, setStudents] = useState<StudentWithRanking[]>([]);
+  const [students, setStudents] = useState<StudentWithRanking[]>([]);
   const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,8 +46,6 @@ const StudentsPage = ({}: StudentsPageProps) => {
   // Modal states
   const [selectedStudent, setSelectedStudent] = useState<StudentWithRanking | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   
   const { toast } = useToast();
 
@@ -69,7 +62,7 @@ const StudentsPage = ({}: StudentsPageProps) => {
       });
 
       const response = await authFetch(`/api/students?${params}`);
-            const result = await response.json();
+      const result = await response.json();
 
       if (result.success) {
         setStudents(result.data.students);
@@ -94,34 +87,6 @@ const StudentsPage = ({}: StudentsPageProps) => {
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
-
-  // Show loading while authenticating
-  if (authLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Loading...</p>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  // Show error if authentication failed
-  if (authError || !user) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <p className="text-red-600 mb-4">Authentication failed</p>
-            <Button onClick={() => window.location.reload()}>Retry</Button>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   const handleViewDetail = (student: StudentWithRanking) => {
     setSelectedStudent(student);
@@ -166,173 +131,203 @@ const StudentsPage = ({}: StudentsPageProps) => {
   const getStatusBadge = (status: StudentStatus) => {
     switch (status) {
       case 'APPROVED':
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Diterima</Badge>;
+        return <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200"><CheckCircle className="h-3 w-3 mr-1" />Diterima</Badge>;
       case 'REJECTED':
-        return <Badge className="bg-red-100 text-red-800"><XCircle className="h-3 w-3 mr-1" />Ditolak</Badge>;
+        return <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200"><XCircle className="h-3 w-3 mr-1" />Ditolak</Badge>;
+      case 'WAITLIST':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200"><Clock className="h-3 w-3 mr-1" />Cadangan</Badge>;
       default:
-        return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
     }
   };
 
-  
+  // Show loading state
+  if (authLoading || loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Show error if authentication failed
+  if (authError || !user) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Authentication failed</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <AdminLayout 
-      title="Manajemen Siswa"
-      subtitle="Kelola penerimaan siswa berdasarkan ranking"
-    >
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header with Add Button */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Daftar Siswa</h1>
-            <p className="text-muted-foreground">Kelola data siswa dan status penerimaan</p>
+    <AdminLayout>
+      <div className="space-y-8">
+        {/* Page Header */}
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-800/50 rounded-2xl p-8 border border-gray-200/50 dark:border-gray-800/50 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent dark:from-gray-200 dark:to-gray-400 mb-3">Manajemen Siswa</h1>
+              <p className="text-muted-foreground text-lg font-medium">Kelola data pendaftar dan status penerimaan di SMKN 1 PPU.</p>
+              <p className="text-sm text-muted-foreground mt-1">Pastikan semua data siswa terverifikasi dengan benar.</p>
+            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">
+                <Users className="h-5 w-5 text-blue-600" />
+                <span className="font-semibold text-blue-600">{stats.total}</span>
+                <span className="text-sm text-muted-foreground">Total Siswa</span>
+              </div>
+            </div>
           </div>
-          <Button onClick={() => router.push('/admin/students/add')} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Tambah Siswa Baru
-          </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Siswa</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Pendaftar</p>
+                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{stats.total}</p>
+                </div>
+                <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Diterima</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.approved}</div>
+
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200 dark:border-yellow-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Menunggu Review</p>
+                  <p className="text-3xl font-bold text-yellow-700 dark:text-yellow-300">{stats.pending}</p>
+                </div>
+                <Clock className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ditolak</CardTitle>
-              <XCircle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.rejected}</div>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Diterima</p>
+                  <p className="text-3xl font-bold text-green-700 dark:text-green-300">{stats.approved}</p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
+
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Ditolak</p>
+                  <p className="text-3xl font-bold text-red-700 dark:text-red-300">{stats.rejected}</p>
+                </div>
+                <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
+        {/* Students Table */}
+        <Card className="shadow-lg border-0 bg-white dark:bg-gray-900">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl">Database Calon Siswa</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">Cari, filter, dan kelola pendaftar.</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Cari nama siswa..."
+                    placeholder="Cari nama atau NISN..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-gray-50 dark:bg-gray-800/50 rounded-full"
                   />
                 </div>
-              </div>
-              <div className="flex gap-2">
-                {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((status) => (
-                  <Button
-                    key={status}
-                    variant={statusFilter === status ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setStatusFilter(status)}
-                  >
-                    {status === 'ALL' ? 'Semua' : 
-                     status === 'PENDING' ? 'Pending' :
-                     status === 'APPROVED' ? 'Diterima' : 'Ditolak'}
-                  </Button>
-                ))}
+                <div className="flex items-center gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+                  {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((status) => (
+                    <Button
+                      key={status}
+                      variant={statusFilter === status ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setStatusFilter(status)}
+                      className={`rounded-full transition-colors duration-200 ${statusFilter === status ? 'bg-black text-white dark:bg-white dark:text-black shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                    >
+                      {status === 'ALL' ? 'Semua' : 
+                       status === 'PENDING' ? 'Menunggu' :
+                       status === 'APPROVED' ? 'Diterima' : 'Ditolak'}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Students Table */}
-        <Card className="overflow-hidden">
-          <CardHeader>
-            <CardTitle>Daftar Siswa</CardTitle>
           </CardHeader>
+
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               {loading ? (
-                <div className="text-center py-8">
-                  <p>Memuat data...</p>
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-center">
+                    <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                    <p className="text-muted-foreground">Memuat data siswa...</p>
+                  </div>
                 </div>
               ) : (
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-gray-50 dark:bg-gray-800/50">
                     <TableRow>
-                      <TableHead className="w-[80px] hidden sm:table-cell">Ranking</TableHead>
-                      <TableHead>Nama</TableHead>
-                      <TableHead className="hidden md:table-cell">Jurusan</TableHead>
-                      <TableHead className="w-[100px] hidden lg:table-cell">Skor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden lg:table-cell">Tgl Daftar</TableHead>
-                      <TableHead className="text-right w-[180px]">Aksi</TableHead>
+                      <TableHead className="w-[80px] hidden sm:table-cell font-semibold">Peringkat</TableHead>
+                      <TableHead className="font-semibold">Nama Siswa</TableHead>
+                      <TableHead className="hidden md:table-cell font-semibold">Pilihan Jurusan</TableHead>
+                      <TableHead className="w-[100px] hidden lg:table-cell font-semibold">Skor Akhir</TableHead>
+                      <TableHead className="font-semibold">Status</TableHead>
+                      <TableHead className="hidden lg:table-cell font-semibold">Tanggal Daftar</TableHead>
+                      <TableHead className="text-right font-semibold">Tindakan</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {students.map((student) => (
                       <TableRow key={student.id}>
-                        <TableCell className="font-medium hidden sm:table-cell">
-                          {student.ranking?.rank || '-'}
+                        <TableCell className="font-medium text-center hidden sm:table-cell">
+                          <span className="font-bold text-lg">{student.ranking?.rank || '-'}</span>
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium">{student.fullName}</div>
-                          <div className="text-sm text-muted-foreground md:hidden">
+                          <div className="font-bold text-base">{student.fullName}</div>
+                          <div className="text-sm text-muted-foreground">NISN: {student.nisn}</div>
+                          <div className="text-sm text-muted-foreground md:hidden mt-1">
                             {student.selectedMajor}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">{student.selectedMajor}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{student.ranking?.totalScore.toFixed(2) || '-'}</TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">{student.selectedMajor}</TableCell>
+                        <TableCell className="hidden lg:table-cell font-semibold text-center">{student.ranking?.totalScore.toFixed(2) || '-'}</TableCell>
                         <TableCell>{getStatusBadge(student.finalStatus)}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{new Date(student.createdAt).toLocaleDateString('id-ID')}</TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground">{new Date(student.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleViewDetail(student)}
-                              title="Lihat Detail"
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => handleViewDetail(student)} title="Lihat Detail">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                               variant="outline"
-                               size="icon"
-                               onClick={() => handleEditStudent(student)}
-                               title="Edit"
-                             >
-                               <Pencil className="h-4 w-4" />
-                             </Button>
-                             <Button
-                               variant="destructive"
-                               size="icon"
-                               onClick={() => handleDeleteStudent(student.id, student.fullName)}
-                               title="Hapus"
-                             >
-                               <Trash className="h-4 w-4" />
-                             </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleEditStudent(student)} title="Edit">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-100" onClick={() => handleDeleteStudent(student.id, student.fullName)} title="Hapus">
+                              <Trash className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -344,26 +339,31 @@ const StudentsPage = ({}: StudentsPageProps) => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-4 p-4 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Sebelumnya
-                </Button>
-                <span className="text-sm">
-                  Halaman {currentPage} dari {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Selanjutnya
-                </Button>
+              <div className="flex items-center justify-between gap-2 p-4 border-t border-gray-200 dark:border-gray-800">
+                <p className="text-sm text-muted-foreground">
+                  Total <span className="font-semibold">{students.length}</span> dari <span className="font-semibold">{stats.total}</span> siswa
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Sebelumnya
+                  </Button>
+                  <span className="text-sm font-medium">
+                    Halaman {currentPage} dari {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Selanjutnya
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
@@ -381,10 +381,6 @@ const StudentsPage = ({}: StudentsPageProps) => {
           }}
         />
       )}
-
-      
-
-      
     </AdminLayout>
   );
 };

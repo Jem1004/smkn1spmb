@@ -2,19 +2,18 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useAuthStore } from '@/store/auth-store'
+import { useSession } from 'next-auth/react'
 import { Student } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Save, Edit, GraduationCap } from 'lucide-react'
 import StudentFormWizard from '@/modules/students/components/StudentFormWizard'
 import AdminLayout from '@/components/AdminLayout'
-import { authFetch } from '@/hooks/use-auth'
 
 export default function EditStudentPage() {
   const router = useRouter()
   const params = useParams()
-  const { user, isAuthenticated, token } = useAuthStore()
+  const { data: session, status } = useSession()
   const [student, setStudent] = useState<Student | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -22,7 +21,11 @@ export default function EditStudentPage() {
   const fetchStudent = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await authFetch(`/api/students/${params.id}`)
+      const response = await fetch(`/api/students/${params.id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
       if (!response.ok) {
         throw new Error('Failed to fetch student data')
@@ -38,13 +41,11 @@ export default function EditStudentPage() {
   }, [params.id])
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'ADMIN') {
-      router.push('/login')
-      return
+    // AdminLayout sudah menangani autentikasi
+    if (status === 'authenticated') {
+      fetchStudent()
     }
-
-    fetchStudent()
-  }, [isAuthenticated, user, params.id, fetchStudent, router])
+  }, [status, params.id, fetchStudent])
 
   const handleBack = () => {
     router.push('/admin/students')
@@ -52,8 +53,11 @@ export default function EditStudentPage() {
 
   const handleSave = async (formData: any) => {
     try {
-      const response = await authFetch(`/api/students/${params.id}`, {
+      const response = await fetch(`/api/students/${params.id}`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(formData)
       })
 
@@ -68,7 +72,7 @@ export default function EditStudentPage() {
     }
   }
 
-  if (isLoading) {
+  if (status === 'loading' || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

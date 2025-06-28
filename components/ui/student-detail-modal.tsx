@@ -98,6 +98,24 @@ export function StudentDetailModal({ student, open, onOpenChange }: StudentDetai
                   </p>
                 </div>
               )}
+              {(student.childOrder || student.totalSiblings) && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Anak ke / Jumlah Saudara</label>
+                  <p className="text-sm">{student.childOrder || '-'} dari {student.totalSiblings || '-'} bersaudara</p>
+                </div>
+              )}
+              {(student.height || student.weight) && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Tinggi / Berat Badan</label>
+                  <p className="text-sm">{student.height || '-'} cm / {student.weight || '-'} kg</p>
+                </div>
+              )}
+              {student.medicalHistory && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Riwayat Penyakit</label>
+                  <p className="text-sm bg-gray-50 p-2 rounded">{student.medicalHistory}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -164,6 +182,12 @@ export function StudentDetailModal({ student, open, onOpenChange }: StudentDetai
                   <p className="text-sm">{student.fatherJob}</p>
                 </div>
               )}
+              {student.fatherEducation && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Pendidikan Ayah</label>
+                  <p className="text-sm">{student.fatherEducation}</p>
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium text-gray-500">Nama Ibu</label>
                 <p className="text-sm">{student.motherName}</p>
@@ -174,10 +198,22 @@ export function StudentDetailModal({ student, open, onOpenChange }: StudentDetai
                   <p className="text-sm">{student.motherJob}</p>
                 </div>
               )}
+              {student.motherEducation && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Pendidikan Ibu</label>
+                  <p className="text-sm">{student.motherEducation}</p>
+                </div>
+              )}
               {student.guardianName && (
                 <div>
                   <label className="text-sm font-medium text-gray-500">Nama Wali</label>
                   <p className="text-sm">{student.guardianName}</p>
+                </div>
+              )}
+              {student.guardianJob && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Pekerjaan Wali</label>
+                  <p className="text-sm">{student.guardianJob}</p>
                 </div>
               )}
               {student.parentPhone && (
@@ -187,6 +223,12 @@ export function StudentDetailModal({ student, open, onOpenChange }: StudentDetai
                     <Phone className="w-3 h-3" />
                     {student.parentPhone}
                   </p>
+                </div>
+              )}
+              {student.parentAddress && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Alamat Orang Tua</label>
+                  <p className="text-sm">{student.parentAddress}</p>
                 </div>
               )}
             </CardContent>
@@ -221,6 +263,12 @@ export function StudentDetailModal({ student, open, onOpenChange }: StudentDetai
                 <label className="text-sm font-medium text-gray-500">Tahun Lulus</label>
                 <p className="text-sm">{student.graduationYear}</p>
               </div>
+              {student.certificateNumber && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Nomor Sertifikat</label>
+                  <p className="text-sm">{student.certificateNumber}</p>
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium text-gray-500">Jurusan Pilihan</label>
                 <p className="text-sm font-medium">{student.selectedMajor}</p>
@@ -268,47 +316,117 @@ export function StudentDetailModal({ student, open, onOpenChange }: StudentDetai
             </CardContent>
           </Card>
 
-          {/* Ranking & Status */}
+          {/* Nilai Akademik */}
           {student.ranking && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Award className="w-4 h-4" />
-                  Ranking & Status
+                  <GraduationCap className="w-4 h-4" />
+                  Nilai Akademik
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Total Skor</label>
-                  <p className="text-sm font-bold">{student.ranking.totalScore.toFixed(2)}</p>
-                </div>
-                {student.ranking.rank && (
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Peringkat</label>
-                    <p className="text-sm font-bold">#{student.ranking.rank}</p>
+                    <label className="text-sm font-medium text-gray-500">Matematika</label>
+                    <p className="text-sm font-bold">{student.ranking.mathScore}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Bahasa Indonesia</label>
+                    <p className="text-sm font-bold">{student.ranking.indonesianScore}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Bahasa Inggris</label>
+                    <p className="text-sm font-bold">{student.ranking.englishScore}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">IPA</label>
+                    <p className="text-sm font-bold">{student.ranking.scienceScore}</p>
+                  </div>
+                </div>
+                {student.ranking.academicAchievement && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Prestasi Akademik</label>
+                    <p className="text-sm bg-blue-50 p-2 rounded">{student.ranking.academicAchievement}</p>
                   </div>
                 )}
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Status Penerimaan</label>
-                  <div className="mt-1">{getStatusBadge(student.finalStatus)}</div>
-                </div>
-                {student.adminNotes && (
+                {student.ranking.nonAcademicAchievement && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Catatan Admin</label>
-                    <p className="text-sm bg-gray-50 p-2 rounded">{student.adminNotes}</p>
+                    <label className="text-sm font-medium text-gray-500">Prestasi Non-Akademik</label>
+                    <p className="text-sm bg-green-50 p-2 rounded">{student.ranking.nonAcademicAchievement}</p>
                   </div>
                 )}
-                {student.processedAt && (
+                {student.ranking.certificateScore && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Diproses Pada</label>
-                    <p className="text-sm">
-                      {format(new Date(student.processedAt), 'dd MMMM yyyy HH:mm', { locale: id })}
-                    </p>
+                    <label className="text-sm font-medium text-gray-500">Skor Sertifikat</label>
+                    <p className="text-sm bg-yellow-50 p-2 rounded">{student.ranking.certificateScore}</p>
+                  </div>
+                )}
+                {student.ranking.accreditation && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Akreditasi Sekolah Asal</label>
+                    <p className="text-sm font-medium">{student.ranking.accreditation}</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           )}
+
+          {/* Ranking & Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-4 h-4" />
+                Ranking & Status Penerimaan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {student.ranking && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Total Skor</label>
+                    <p className="text-lg font-bold text-blue-600">{student.ranking.totalScore.toFixed(2)}</p>
+                  </div>
+                  {student.ranking.rank && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Peringkat</label>
+                      <p className="text-lg font-bold text-green-600">#{student.ranking.rank}</p>
+                    </div>
+                  )}
+                </>
+              )}
+              <div>
+                <label className="text-sm font-medium text-gray-500">Status Penerimaan</label>
+                <div className="mt-1">{getStatusBadge(student.finalStatus)}</div>
+              </div>
+              {student.adminNotes && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Catatan Admin</label>
+                  <p className="text-sm bg-gray-50 p-2 rounded">{student.adminNotes}</p>
+                </div>
+              )}
+              {student.processedAt && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Diproses Pada</label>
+                  <p className="text-sm">
+                    {format(new Date(student.processedAt), 'dd MMMM yyyy HH:mm', { locale: id })}
+                  </p>
+                </div>
+              )}
+              {student.processedBy && (
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Diproses Oleh</label>
+                  <p className="text-sm">{student.processedBy}</p>
+                </div>
+              )}
+              <div>
+                <label className="text-sm font-medium text-gray-500">Tanggal Pendaftaran</label>
+                <p className="text-sm">
+                  {format(new Date(student.createdAt), 'dd MMMM yyyy HH:mm', { locale: id })}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </DialogContent>
     </Dialog>

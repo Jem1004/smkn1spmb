@@ -153,20 +153,22 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ onQuotaUpdate }) => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Manajemen Kuota Jurusan</h2>
-          <p className="text-muted-foreground">
-            Kelola kuota penerimaan untuk setiap program keahlian
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="text-sm">
-            <Users className="w-4 h-4 mr-1" />
-            Total: {getTotalQuota()} siswa
-          </Badge>
+    <div className="space-y-8">
+       {/* Page Header */}
+       <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-800/50 rounded-2xl p-8 border border-gray-200/50 dark:border-gray-800/50 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent dark:from-gray-200 dark:to-gray-400 mb-3">Manajemen Kuota</h1>
+            <p className="text-muted-foreground text-lg font-medium">Atur kuota penerimaan untuk setiap program keahlian.</p>
+          </div>
+          <div className="hidden md:flex items-center space-x-4">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <Users className="h-12 w-12 text-blue-500" />
+            </div>
+            <Badge variant="outline" className="text-lg py-2 px-4 rounded-full shadow-md">
+              Total Kuota: <span className="font-bold ml-2">{getTotalQuota()}</span>
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -182,34 +184,33 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ onQuotaUpdate }) => {
 
       {/* Quota Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Object.entries(quotas).map(([majorCode, quota]) => (
-          <Card key={majorCode} className="relative">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">{getMajorName(majorCode)}</CardTitle>
-              <p className="text-sm text-muted-foreground">{majorCode}</p>
+        {AVAILABLE_MAJORS.map((major) => (
+          <Card key={major} className="shadow-md hover:shadow-lg transition-shadow rounded-xl border-l-4 border-blue-500">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">{major}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor={`quota-${majorCode}`}>Kuota Penerimaan</Label>
+                <Label htmlFor={`quota-${major}`} className="text-muted-foreground">Kuota Penerimaan</Label>
                 <Input
-                  id={`quota-${majorCode}`}
+                  id={`quota-${major}`}
                   type="number"
                   min="0"
                   max="200"
-                  value={quota}
-                  onChange={(e) => handleQuotaChange(majorCode, e.target.value)}
-                  className="text-center text-lg font-semibold"
+                  value={quotas[major] || 0}
+                  onChange={(e) => handleQuotaChange(major, e.target.value)}
+                  className="text-center text-2xl font-bold h-12 rounded-lg"
                 />
               </div>
               
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
                 <span>Cadangan (10%)</span>
-                <span className="font-medium">{Math.ceil(quota * 0.1)} siswa</span>
+                <span className="font-medium">{Math.ceil((quotas[major] || 0) * 0.1)} siswa</span>
               </div>
               
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm font-semibold">
                 <span>Total Kapasitas</span>
-                <span className="font-semibold">{quota + Math.ceil(quota * 0.1)} siswa</span>
+                <span>{(quotas[major] || 0) + Math.ceil((quotas[major] || 0) * 0.1)} siswa</span>
               </div>
             </CardContent>
           </Card>
@@ -217,11 +218,12 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ onQuotaUpdate }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end space-x-3 pt-6 border-t">
+      <div className="flex items-center justify-end space-x-3 pt-6 border-t sticky bottom-0 bg-background/80 backdrop-blur-sm py-4 z-10">
         <Button
           variant="outline"
           onClick={handleReset}
           disabled={!isModified || isSaving}
+          className="rounded-full shadow-md"
         >
           <RotateCcw className="w-4 h-4 mr-2" />
           Reset
@@ -229,6 +231,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ onQuotaUpdate }) => {
         <Button
           onClick={handleSave}
           disabled={!isModified || isSaving}
+          className="rounded-full shadow-md bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           {isSaving ? (
             <>
@@ -244,41 +247,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ onQuotaUpdate }) => {
         </Button>
       </div>
 
-      {/* Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" />
-            Ringkasan Kuota
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{getTotalQuota()}</div>
-              <div className="text-sm text-muted-foreground">Total Kuota</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {Math.ceil(getTotalQuota() * 0.1)}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Cadangan</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {getTotalQuota() + Math.ceil(getTotalQuota() * 0.1)}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Kapasitas</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {Object.keys(quotas).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Jumlah Jurusan</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   )
 }
