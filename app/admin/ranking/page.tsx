@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Download, Search, Filter, Trophy, Target, Users, TrendingUp, RefreshCw, Play } from 'lucide-react'
+import { Download, Search, Filter, Trophy, Target, Users, TrendingUp, RefreshCw, Play, PlayCircle } from 'lucide-react'
 import { Student, MajorType, AVAILABLE_MAJORS } from '@/types'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth, authFetch } from '@/hooks/use-auth'
 import AdminLayout from '@/components/AdminLayout'
 import { 
   RankingStatistics, 
@@ -20,6 +21,7 @@ import {
 interface RankingPageProps {}
 
 export default function RankingPage({}: RankingPageProps) {
+  const { user, loading: authLoading, error: authError } = useAuth('ADMIN')
   const [comprehensiveData, setComprehensiveData] = useState<{
     rankings: Record<MajorType, any[]>
     majorData: MajorRankingData[]
@@ -33,15 +35,12 @@ export default function RankingPage({}: RankingPageProps) {
   const [simulationResults, setSimulationResults] = useState<any>(null)
   const { toast } = useToast()
 
-  useEffect(() => {
-    loadRankingData()
-    loadCompetitionAnalysis()
-  }, [])
-
-  const loadRankingData = async () => {
+  const loadRankingData = useCallback(async () => {
+    if (authLoading || !user) return
+    
     try {
       setLoading(true)
-      const response = await fetch('/api/ranking?type=comprehensive')
+      const response = await authFetch('/api/ranking?type=comprehensive')
       if (response.ok) {
         const data = await response.json()
         setComprehensiveData(data)
@@ -58,11 +57,13 @@ export default function RankingPage({}: RankingPageProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [authLoading, user, toast])
 
-  const loadCompetitionAnalysis = async () => {
+  const loadCompetitionAnalysis = useCallback(async () => {
+    if (authLoading || !user) return
+    
     try {
-      const response = await fetch('/api/ranking?type=competition')
+      const response = await authFetch('/api/ranking?type=competition')
       if (response.ok) {
         const data = await response.json()
         setCompetitionAnalysis(data)
@@ -70,24 +71,83 @@ export default function RankingPage({}: RankingPageProps) {
     } catch (error) {
       console.error('Error loading competition analysis:', error)
     }
+  }, [authLoading, user])
+
+  useEffect(() => {
+    loadRankingData()
+    loadCompetitionAnalysis()
+  }, [loadRankingData, loadCompetitionAnalysis])
+
+  // Show loading while authenticating
+  if (authLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    )
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  // Show error if authentication failed
+  if (authError || !user) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Authentication failed</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+      </AdminLayout>
+    )
+  }
+
+  const getStatusBadge = (student: any) => {
+    const displayStatus = student.finalStatus || student.status;
+
+    switch (displayStatus) {
+      case 'APPROVED':
       case 'DITERIMA':
         return <Badge className="bg-green-100 text-green-800 border-green-200">Diterima</Badge>
-      case 'CADANGAN':
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Cadangan</Badge>
+      case 'REJECTED':
       case 'TIDAK_DITERIMA':
         return <Badge className="bg-red-100 text-red-800 border-red-200">Tidak Diterima</Badge>
+      case 'WAITLIST':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Cadangan</Badge>
+      default:
+        return <Badge variant="secondary">Pending</Badge>
+    }
+
+    switch (displayStatus) {
+      case 'DITERIMA':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Diterima</Badge>
+      case 'TIDAK_DITERIMA':
+        return <Badge className="bg-red-100 text-red-800 border-red-200">Tidak Diterima</Badge>
+      case 'WAITLIST':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Cadangan</Badge>
       default:
         return <Badge variant="secondary">Pending</Badge>
     }
   }
 
   const getMajorName = (majorCode: string): string => {
-    const major = AVAILABLE_MAJORS.find(m => m === majorCode)
-    return major || majorCode
+    const majorMap: Record<string, string> = {
+      'Teknik Kendaraan Ringan Otomotif': 'TKRO',
+      'Teknik Alat Berat': 'TAB',
+      'Teknik Komputer dan Jaringan': 'TKJ',
+      'Akuntansi dan Keuangan Lembaga': 'AKL',
+      'Asisten Keperawatan': 'AK',
+      'Agribisnis Ternak Ruminansia': 'ATR'
+    }
+    return majorMap[majorCode] || majorCode
+  }
+
+  const getFullMajorName = (majorCode: string): string => {
+    return AVAILABLE_MAJORS.find(m => m === majorCode) || majorCode
   }
 
   const getFilteredRankings = () => {
@@ -111,9 +171,13 @@ export default function RankingPage({}: RankingPageProps) {
     
     // Apply status filter
     if (statusFilter !== 'all') {
-      filteredRankings = filteredRankings.filter(student => 
-        student.status === statusFilter
-      )
+      filteredRankings = filteredRankings.filter(student => {
+        const currentStatus = student.finalStatus || student.status;
+        if (statusFilter === 'DITERIMA') return currentStatus === 'APPROVED' || currentStatus === 'DITERIMA';
+        if (statusFilter === 'TIDAK_DITERIMA') return currentStatus === 'REJECTED' || currentStatus === 'TIDAK_DITERIMA';
+        if (statusFilter === 'CADANGAN') return currentStatus === 'WAITLIST'; // Assuming 'CADANGAN' maps to 'WAITLIST'
+        return false;
+      });
     }
     
     return filteredRankings
@@ -154,7 +218,7 @@ export default function RankingPage({}: RankingPageProps) {
 
   const runSimulation = async () => {
     try {
-      const response = await fetch('/api/ranking?type=simulation')
+      const response = await authFetch('/api/ranking?type=simulation')
       if (response.ok) {
         const data = await response.json()
         setSimulationResults(data)
@@ -172,6 +236,85 @@ export default function RankingPage({}: RankingPageProps) {
       })
     }
   }
+
+  const updateStudentStatus = async (studentId: string, newStatus: 'APPROVED' | 'REJECTED') => {
+    try {
+      const response = await authFetch(`/api/students/${studentId}/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'update_status',
+          status: newStatus,
+          reason: `Status diubah secara manual dari halaman ranking`
+        })
+      })
+      
+      if (response.ok) {
+        toast({
+          title: "Berhasil",
+          description: `Status siswa berhasil diubah.`
+        });
+
+        // Optimistic UI update to ensure consistency
+        setComprehensiveData(prevData => {
+          if (!prevData) return null;
+
+          const updatedRankings = JSON.parse(JSON.stringify(prevData.rankings));
+          const updatedStatistics = { ...prevData.overallStatistics };
+
+          let studentFound = false;
+          for (const major in updatedRankings) {
+            const studentIndex = updatedRankings[major].findIndex((s: any) => s.studentId === studentId);
+            if (studentIndex !== -1) {
+              const studentToUpdate = updatedRankings[major][studentIndex];
+              const oldDbStatus = studentToUpdate.finalStatus || (studentToUpdate.status === 'DITERIMA' ? 'APPROVED' : 'REJECTED');
+
+              if (oldDbStatus !== newStatus) {
+                // Update status for UI
+                studentToUpdate.finalStatus = newStatus;
+                studentToUpdate.status = newStatus === 'APPROVED' ? 'DITERIMA' : 'TIDAK_DITERIMA';
+
+                // Update statistics
+                if (oldDbStatus === 'APPROVED') updatedStatistics.totalAccepted--;
+                else if (oldDbStatus === 'REJECTED') updatedStatistics.totalRejected--;
+
+                if (newStatus === 'APPROVED') updatedStatistics.totalAccepted++;
+                else if (newStatus === 'REJECTED') updatedStatistics.totalRejected++;
+              }
+              studentFound = true;
+              break;
+            }
+          }
+
+          if (studentFound) {
+            return {
+              ...prevData,
+              rankings: updatedRankings,
+              overallStatistics: updatedStatistics,
+            };
+          }
+          return prevData;
+        });
+
+        // Optional: Reload data from server to ensure consistency
+        // loadRankingData();
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Gagal memperbarui status siswa')
+      }
+    } catch (error) {
+      console.error('Error updating student status:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Gagal mengubah status siswa",
+        variant: "destructive"
+      })
+    }
+  }
+
+
 
   if (loading) {
     return (
@@ -210,14 +353,14 @@ export default function RankingPage({}: RankingPageProps) {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="flex items-center space-x-4">
+                <Users className="w-8 h-8 text-blue-600" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Pendaftar</p>
-                  <p className="text-2xl font-bold">{overallStatistics.totalStudents}</p>
+                  <p className="text-2xl font-bold">{overallStatistics?.totalStudents ?? 0}</p>
                 </div>
               </div>
             </CardContent>
@@ -225,12 +368,12 @@ export default function RankingPage({}: RankingPageProps) {
           
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5 text-green-600" />
+              <div className="flex items-center space-x-4">
+                <Trophy className="w-8 h-8 text-green-600" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Diterima</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {overallStatistics.totalAccepted}
+                    {overallStatistics?.totalAccepted ?? 0}
                   </p>
                 </div>
               </div>
@@ -239,26 +382,12 @@ export default function RankingPage({}: RankingPageProps) {
           
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Target className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Cadangan</p>
-                  <p className="text-2xl font-bold text-yellow-600">
-                    {overallStatistics.totalWaitlist}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-red-600" />
+              <div className="flex items-center space-x-4">
+                <TrendingUp className="w-8 h-8 text-red-600" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Tidak Diterima</p>
                   <p className="text-2xl font-bold text-red-600">
-                    {overallStatistics.totalRejected}
+                    {overallStatistics?.totalRejected ?? 0}
                   </p>
                 </div>
               </div>
@@ -316,6 +445,7 @@ export default function RankingPage({}: RankingPageProps) {
           <TabsList>
             <TabsTrigger value="ranking">Ranking Siswa</TabsTrigger>
             <TabsTrigger value="competition">Analisis Kompetisi</TabsTrigger>
+
             <TabsTrigger value="simulation">Simulasi Penerimaan</TabsTrigger>
           </TabsList>
 
@@ -366,12 +496,43 @@ export default function RankingPage({}: RankingPageProps) {
                           <TableCell className="font-mono">{student.nisn}</TableCell>
                           <TableCell>{student.fullName}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">{getMajorName(student.firstChoice)}</Badge>
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="text-xs">
+                                {getMajorName(student.selectedMajor || student.firstChoice)}
+                              </Badge>
+                              <div className="text-xs text-muted-foreground">
+                                {getFullMajorName(student.selectedMajor || student.firstChoice)}
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <span className="font-semibold">{student.totalScore.toFixed(2)}</span>
                           </TableCell>
-                          <TableCell>{getStatusBadge(student.status)}</TableCell>
+                                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              {getStatusBadge(student)}
+                              <div className="flex space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-2 text-xs bg-green-50 hover:bg-green-100 text-green-700"
+                                  onClick={() => updateStudentStatus(student.studentId, 'APPROVED')}
+                                  disabled={student.finalStatus === 'APPROVED'}
+                                >
+                                  Terima
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-2 text-xs bg-red-50 hover:bg-red-100 text-red-700"
+                                  onClick={() => updateStudentStatus(student.studentId, 'REJECTED')}
+                                  disabled={student.finalStatus === 'REJECTED'}
+                                >
+                                  Tolak
+                                </Button>
+                              </div>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -419,8 +580,8 @@ export default function RankingPage({}: RankingPageProps) {
                         <TableRow key={analysis.majorCode}>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{analysis.majorName}</div>
-                              <div className="text-sm text-muted-foreground">{analysis.majorCode}</div>
+                              <div className="font-medium">{getMajorName(analysis.majorCode)}</div>
+                              <div className="text-sm text-muted-foreground">{getFullMajorName(analysis.majorCode)}</div>
                             </div>
                           </TableCell>
                           <TableCell>{analysis.applicants}</TableCell>
@@ -446,6 +607,8 @@ export default function RankingPage({}: RankingPageProps) {
             </Card>
           </TabsContent>
 
+
+
           {/* Simulation Tab */}
           <TabsContent value="simulation">
             <Card>
@@ -470,94 +633,76 @@ export default function RankingPage({}: RankingPageProps) {
                   </Button>
                 </div>
 
-                {simulationResults && (
+                {simulationResults ? (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">
-                              {simulationResults.summary.totalAccepted}
-                            </div>
-                            <div className="text-sm text-muted-foreground">Diterima</div>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Ringkasan Hasil Simulasi</CardTitle>
+                        <CardDescription>
+                          Hasil ini adalah proyeksi berdasarkan kuota saat ini dan tidak mengubah status siswa secara permanen.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                          <div className="p-4 bg-green-50 rounded-lg">
+                            <div className="text-3xl font-bold text-green-700">{simulationResults.summary?.totalAccepted ?? 0}</div>
+                            <div className="text-sm font-medium text-green-600">Total Diterima</div>
                           </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-yellow-600">
-                              {simulationResults.summary.totalWaitlist}
-                            </div>
-                            <div className="text-sm text-muted-foreground">Cadangan</div>
+                          <div className="p-4 bg-red-50 rounded-lg">
+                            <div className="text-3xl font-bold text-red-700">{simulationResults.summary?.totalRejected ?? 0}</div>
+                            <div className="text-sm font-medium text-red-600">Total Ditolak</div>
                           </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-red-600">
-                              {simulationResults.summary.totalRejected}
-                            </div>
-                            <div className="text-sm text-muted-foreground">Ditolak</div>
+                          <div className="p-4 bg-blue-50 rounded-lg">
+                            <div className="text-3xl font-bold text-blue-700">{(simulationResults.summary?.quotaUtilization ?? 0).toFixed(1)}%</div>
+                            <div className="text-sm font-medium text-blue-600">Utilisasi Kuota</div>
                           </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">
-                              {simulationResults.summary.quotaUtilization.toFixed(1)}%
-                            </div>
-                            <div className="text-sm text-muted-foreground">Utilisasi Kuota</div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
                     <Card>
                       <CardHeader>
-                        <CardTitle>Hasil Simulasi per Jurusan</CardTitle>
+                        <CardTitle>Detail Simulasi per Jurusan</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <Table>
                           <TableHeader>
                             <TableRow>
                               <TableHead>Jurusan</TableHead>
+                              <TableHead>Kuota</TableHead>
                               <TableHead>Diterima</TableHead>
-                              <TableHead>Cadangan</TableHead>
                               <TableHead>Ditolak</TableHead>
-                              <TableHead>Total Pendaftar</TableHead>
+                              <TableHead>Sisa Kuota</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {Object.entries(simulationResults.results).map(([majorCode, results]: [string, any]) => (
-                              <TableRow key={majorCode}>
-                                <TableCell>{getMajorName(majorCode)}</TableCell>
-                                <TableCell>
-                                  <Badge className="bg-green-100 text-green-800">
-                                    {results.accepted.length}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge className="bg-yellow-100 text-yellow-800">
-                                    {results.waitlist.length}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge className="bg-red-100 text-red-800">
-                                    {results.rejected.length}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  {results.accepted.length + results.waitlist.length + results.rejected.length}
+                            {simulationResults.results && Object.keys(simulationResults.results).length > 0 ? (
+                              Object.entries(simulationResults.results).map(([majorCode, res]: [string, any]) => (
+                                <TableRow key={majorCode}>
+                                  <TableCell className="font-medium">{getMajorName(majorCode) ?? 'N/A'}</TableCell>
+                                  <TableCell>{res.quota ?? 0}</TableCell>
+                                  <TableCell className="text-green-600 font-semibold">{res.acceptedCount ?? 0}</TableCell>
+                                  <TableCell className="text-red-600 font-semibold">{res.rejectedCount ?? 0}</TableCell>
+                                  <TableCell>{(res.quota ?? 0) - (res.acceptedCount ?? 0)}</TableCell>
+                                </TableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                  Jalankan simulasi untuk melihat hasilnya.
                                 </TableCell>
                               </TableRow>
-                            ))}
+                            )}
                           </TableBody>
                         </Table>
                       </CardContent>
                     </Card>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                    <PlayCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-semibold">Simulasi Belum Dijalankan</p>
+                    <p className="text-sm">Klik tombol &quot;Jalankan Simulasi&quot; untuk memulai.</p>
                   </div>
                 )}
               </CardContent>

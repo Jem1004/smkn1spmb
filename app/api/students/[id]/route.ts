@@ -177,7 +177,7 @@ export async function PUT(
           hasSertifikat: body.hasSertifikat,
           
           // Status
-          registrationStatus: existingStudent.registrationStatus
+          // Status is not included in update since it's not part of the form data
         }
       })
 

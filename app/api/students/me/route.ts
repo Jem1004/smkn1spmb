@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     if (!student) {
       return NextResponse.json(
-        { error: 'Student data not found' },
+        { error: 'Data siswa tidak ditemukan. Silakan hubungi administrator untuk melengkapi data pendaftaran Anda.' },
         { status: 404 }
       )
     }
@@ -54,8 +54,26 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching student data:', error)
+    
+    // Check if it's a database connection error
+    if (error instanceof Error) {
+      if (error.message.includes('connect') || error.message.includes('timeout')) {
+        return NextResponse.json(
+          { error: 'Koneksi ke database bermasalah. Silakan coba lagi dalam beberapa saat.' },
+          { status: 503 }
+        )
+      }
+      
+      if (error.message.includes('permission') || error.message.includes('access')) {
+        return NextResponse.json(
+          { error: 'Akses ke data siswa ditolak. Silakan hubungi administrator.' },
+          { status: 403 }
+        )
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Terjadi kesalahan sistem. Tim kami telah diberitahu dan sedang memperbaiki masalah ini.' },
       { status: 500 }
     )
   }

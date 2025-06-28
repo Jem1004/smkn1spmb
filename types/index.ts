@@ -1,5 +1,9 @@
 // Types untuk aplikasi PPDB
-import { Role, Gender, RegistrationStatus } from '@prisma/client'
+// Types for enum values as strings
+export type Role = 'ADMIN' | 'STUDENT'
+export type Gender = 'MALE' | 'FEMALE'
+export type StudentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAITLIST'
+export type ProcessAction = 'ACCEPT' | 'REJECT'
 
 export interface User {
   id: string
@@ -58,7 +62,7 @@ export interface Student {
   // Pilihan Jurusan
   selectedMajor: string
   
-  // Status Dokumen
+  // Status Dokumen (untuk tracking upload)
   hasIjazah: boolean
   hasSKHUN: boolean
   hasKK: boolean
@@ -66,9 +70,14 @@ export interface Student {
   hasFoto: boolean
   hasRaport: boolean
   hasSertifikat: boolean
-  
-  // Status Pendaftaran
-  registrationStatus: RegistrationStatus
+
+
+
+  // Status Penerimaan Sederhana
+  finalStatus: StudentStatus
+  adminNotes?: string
+  processedAt?: Date
+  processedBy?: string
   
   createdAt: Date
   updatedAt: Date
@@ -100,9 +109,41 @@ export interface Ranking {
   updatedAt: Date
 }
 
+export interface StudentProcessLog {
+  id: string
+  studentId: string
+  action: ProcessAction
+  reason?: string
+  processedBy: string
+  createdAt: Date
+  processor?: User
+}
+
+
+
 export interface StudentWithRanking extends Student {
   ranking?: Ranking
   user?: User
+  processLogs?: StudentProcessLog[]
+}
+
+export interface StudentProcessRequest {
+  action: ProcessAction
+  reason?: string
+}
+
+export interface BulkProcessRequest {
+  action: ProcessAction
+  studentIds: string[]
+  reason?: string
+}
+
+export interface ProcessSummary {
+  totalStudents: number
+  acceptedStudents: number
+  rejectedStudents: number
+  waitlistStudents: number
+  pendingStudents: number
 }
 
 export interface LoginCredentials {
@@ -219,5 +260,4 @@ export const AVAILABLE_MAJORS = [
 
 export type MajorType = typeof AVAILABLE_MAJORS[number]
 
-// Re-export Prisma enums for convenience
-export { Role, Gender, RegistrationStatus }
+// Types already exported above

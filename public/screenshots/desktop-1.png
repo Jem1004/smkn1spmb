@@ -1,0 +1,62 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Desktop screenshot mockup -->
+  <rect width="1280" height="720" fill="#f8fafc"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1280" height="80" fill="#2563eb"/>
+  <text x="64" y="45" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">PPDB SMK Satu - Dashboard Admin</text>
+  
+  <!-- Sidebar -->
+  <rect x="0" y="80" width="280" height="640" fill="#1e293b"/>
+  <rect x="24" y="104" width="232" height="48" rx="8" fill="#334155"/>
+  <text x="40" y="132" fill="white" font-family="Arial, sans-serif" font-size="16">📊 Dashboard</text>
+  
+  <rect x="24" y="168" width="232" height="48" rx="8" fill="#475569"/>
+  <text x="40" y="196" fill="white" font-family="Arial, sans-serif" font-size="16">👥 Data Siswa</text>
+  
+  <rect x="24" y="232" width="232" height="48" rx="8" fill="#475569"/>
+  <text x="40" y="260" fill="white" font-family="Arial, sans-serif" font-size="16">📋 Pendaftaran</text>
+  
+  <!-- Main content -->
+  <rect x="280" y="80" width="1000" height="640" fill="#ffffff"/>
+  
+  <!-- Stats cards -->
+  <rect x="320" y="120" width="220" height="120" rx="12" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="340" y="150" fill="#1e40af" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Total Siswa</text>
+  <text x="340" y="200" fill="#1e40af" font-family="Arial, sans-serif" font-size="36" font-weight="bold">1,247</text>
+  
+  <rect x="560" y="120" width="220" height="120" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <text x="580" y="150" fill="#92400e" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Menunggu</text>
+  <text x="580" y="200" fill="#92400e" font-family="Arial, sans-serif" font-size="36" font-weight="bold">89</text>
+  
+  <rect x="800" y="120" width="220" height="120" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="820" y="150" fill="#166534" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Diterima</text>
+  <text x="820" y="200" fill="#166534" font-family="Arial, sans-serif" font-size="36" font-weight="bold">1,098</text>
+  
+  <rect x="1040" y="120" width="220" height="120" rx="12" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="1060" y="150" fill="#991b1b" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Ditolak</text>
+  <text x="1060" y="200" fill="#991b1b" font-family="Arial, sans-serif" font-size="36" font-weight="bold">60</text>
+  
+  <!-- Table header -->
+  <rect x="320" y="280" width="920" height="50" fill="#f1f5f9"/>
+  <text x="340" y="310" fill="#475569" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Nama Lengkap</text>
+  <text x="540" y="310" fill="#475569" font-family="Arial, sans-serif" font-size="14" font-weight="bold">NISN</text>
+  <text x="680" y="310" fill="#475569" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Jurusan</text>
+  <text x="840" y="310" fill="#475569" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Status</text>
+  <text x="980" y="310" fill="#475569" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Aksi</text>
+  
+  <!-- Table rows -->
+  <rect x="320" y="330" width="920" height="50" fill="#ffffff"/>
+  <text x="340" y="360" fill="#374151" font-family="Arial, sans-serif" font-size="14">Ahmad Rizki Pratama</text>
+  <text x="540" y="360" fill="#374151" font-family="Arial, sans-serif" font-size="14">1234567890</text>
+  <text x="680" y="360" fill="#374151" font-family="Arial, sans-serif" font-size="14">TKJ</text>
+  <rect x="840" y="345" width="80" height="20" rx="10" fill="#dcfce7"/>
+  <text x="870" y="358" fill="#166534" font-family="Arial, sans-serif" font-size="12">Diterima</text>
+  
+  <rect x="320" y="380" width="920" height="50" fill="#f9fafb"/>
+  <text x="340" y="410" fill="#374151" font-family="Arial, sans-serif" font-size="14">Siti Nurhaliza</text>
+  <text x="540" y="410" fill="#374151" font-family="Arial, sans-serif" font-size="14">0987654321</text>
+  <text x="680" y="410" fill="#374151" font-family="Arial, sans-serif" font-size="14">RPL</text>
+  <rect x="840" y="395" width="80" height="20" rx="10" fill="#fef3c7"/>
+  <text x="865" y="408" fill="#92400e" font-family="Arial, sans-serif" font-size="12">Menunggu</text>
+</svg>

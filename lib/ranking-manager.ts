@@ -10,7 +10,6 @@ import { getCurrentQuotas, getMajorQuotaInfo } from './quota-manager'
 export interface RankingStatistics {
   totalStudents: number
   totalAccepted: number
-  totalWaitlist: number
   totalRejected: number
   averageScore: number
   highestScore: number
@@ -25,7 +24,6 @@ export interface MajorRankingData {
   statistics: {
     totalApplicants: number
     accepted: number
-    waitlist: number
     rejected: number
     quota: number
     highestScore: number
@@ -44,17 +42,16 @@ export interface MajorRankingData {
 /**
  * Get comprehensive ranking data for all majors
  */
-export function getComprehensiveRankingData(students: Student[]): {
+export async function getComprehensiveRankingData(students: Student[]): Promise<{
   rankings: Record<MajorType, StudentRanking[]>
   majorData: MajorRankingData[]
   overallStatistics: RankingStatistics
-} {
+}> {
   const rankings = createMajorRankings(students)
-  const quotas = getCurrentQuotas()
+  const quotas = await getCurrentQuotas()
   const majorData: MajorRankingData[] = []
   
   let totalAccepted = 0
-  let totalWaitlist = 0
   let totalRejected = 0
   let allScores: number[] = []
   
@@ -65,7 +62,6 @@ export function getComprehensiveRankingData(students: Student[]): {
     const quotaInfo = getMajorQuotaInfo(majorCode, majorRankings.length, quotas)
     
     totalAccepted += majorStats.accepted
-    totalWaitlist += majorStats.waitlist
     totalRejected += majorStats.rejected
     
     majorRankings.forEach(student => allScores.push(student.totalScore))
@@ -91,7 +87,6 @@ export function getComprehensiveRankingData(students: Student[]): {
   const overallStatistics: RankingStatistics = {
     totalStudents: students.length,
     totalAccepted,
-    totalWaitlist,
     totalRejected,
     averageScore: allScores.length > 0 ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length : 0,
     highestScore: allScores.length > 0 ? Math.max(...allScores) : 0,
@@ -109,13 +104,13 @@ export function getComprehensiveRankingData(students: Student[]): {
 /**
  * Get ranking data for a specific major
  */
-export function getMajorRankingData(majorCode: string, students: Student[]): MajorRankingData | null {
+export async function getMajorRankingData(majorCode: string, students: Student[]): Promise<MajorRankingData | null> {
   const majorStudents = students.filter(student => student.selectedMajor === majorCode)
   if (majorStudents.length === 0) return null
   
   const rankings = createMajorRankings(students)
   const majorRankings = rankings[majorCode as MajorType] || []
-  const quotas = getCurrentQuotas()
+  const quotas = await getCurrentQuotas()
   const allMajorStats = getMajorStatistics(rankings)
   const majorStats = allMajorStats[majorCode as MajorType]
   const quotaInfo = getMajorQuotaInfo(majorCode, majorRankings.length, quotas)
@@ -141,13 +136,13 @@ export function getMajorRankingData(majorCode: string, students: Student[]): Maj
 /**
  * Get student ranking across all majors
  */
-export function getStudentRanking(studentId: string, students: Student[]): {
+export async function getStudentRanking(studentId: string, students: Student[]): Promise<{
   student: StudentRanking | null
   majorRanking: number
   overallRanking: number
   status: AcceptanceStatus
   majorData: MajorRankingData | null
-} {
+}> {
   const rankings = createMajorRankings(students)
   let studentRanking: StudentRanking | null = null
   let majorCode = ''
@@ -176,7 +171,7 @@ export function getStudentRanking(studentId: string, students: Student[]): {
     .sort((a, b) => b.totalScore - a.totalScore)
   const overallRanking = allStudents.findIndex(s => s.studentId === studentId) + 1
   
-  const majorData = getMajorRankingData(majorCode, students)
+  const majorData = await getMajorRankingData(majorCode, students)
   
   return {
     student: studentRanking,
@@ -211,7 +206,7 @@ export function getStudentsByStatus(students: Student[], status: AcceptanceStatu
 /**
  * Get major competition analysis
  */
-export function getMajorCompetitionAnalysis(students: Student[]): {
+export async function getMajorCompetitionAnalysis(students: Student[]): Promise<{
   majorCode: string
   majorName: string
   applicants: number
@@ -220,8 +215,8 @@ export function getMajorCompetitionAnalysis(students: Student[]): {
   averageScore: number
   cutoffScore: number
   difficulty: 'Sangat Mudah' | 'Mudah' | 'Sedang' | 'Sulit' | 'Sangat Sulit'
-}[] {
-  const { majorData } = getComprehensiveRankingData(students)
+}[]> {
+  const { majorData } = await getComprehensiveRankingData(students)
   
   return majorData.map(data => {
     const averageScore = data.rankings.length > 0 
@@ -256,8 +251,8 @@ export function getMajorCompetitionAnalysis(students: Student[]): {
 /**
  * Export ranking data to CSV
  */
-export function exportRankingDataToCSV(students: Student[], majorCode?: string): string {
-  const { rankings } = getComprehensiveRankingData(students)
+export async function exportRankingDataToCSV(students: Student[], majorCode?: string): Promise<string> {
+  const { rankings } = await getComprehensiveRankingData(students)
   
   let dataToExport: StudentRanking[]
   if (majorCode && rankings[majorCode as MajorType]) {
@@ -313,7 +308,7 @@ function getMajorName(majorCode: string): string {
 /**
  * Simulate acceptance process based on current quotas
  */
-export function simulateAcceptanceProcess(students: Student[], customQuotas?: Record<string, number>): {
+export async function simulateAcceptanceProcess(students: Student[], customQuotas?: Record<string, number>): Promise<{
   results: Record<string, {
     accepted: StudentRanking[]
     waitlist: StudentRanking[]
@@ -321,12 +316,11 @@ export function simulateAcceptanceProcess(students: Student[], customQuotas?: Re
   }>
   summary: {
     totalAccepted: number
-    totalWaitlist: number
     totalRejected: number
     quotaUtilization: number
   }
-} {
-  const quotas = customQuotas || getCurrentQuotas()
+}> {
+  const quotas = customQuotas || await getCurrentQuotas()
   const rankings = createMajorRankings(students)
   const results: Record<string, {
     accepted: StudentRanking[]
@@ -335,7 +329,6 @@ export function simulateAcceptanceProcess(students: Student[], customQuotas?: Re
   }> = {}
   
   let totalAccepted = 0
-  let totalWaitlist = 0
   let totalRejected = 0
   let totalQuota = 0
   
@@ -350,7 +343,6 @@ export function simulateAcceptanceProcess(students: Student[], customQuotas?: Re
     const rejected = majorRankings.slice(quota + reserveQuota)
     
     totalAccepted += accepted.length
-    totalWaitlist += waitlist.length
     totalRejected += rejected.length
     
     results[majorCode] = { accepted, waitlist, rejected }
@@ -360,7 +352,6 @@ export function simulateAcceptanceProcess(students: Student[], customQuotas?: Re
     results,
     summary: {
       totalAccepted,
-      totalWaitlist,
       totalRejected,
       quotaUtilization: (totalAccepted / totalQuota) * 100
     }

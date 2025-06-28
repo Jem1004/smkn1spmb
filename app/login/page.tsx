@@ -43,9 +43,9 @@ export default function LoginPage() {
         // Get session to determine redirect
         const session = await getSession()
         if (session?.user?.role === 'ADMIN') {
-          router.push('/admin/dashboard')
+          router.push('/admin/students')
         } else {
-          router.push('/student/status')
+          router.push('/student')
         }
       }
     } catch (error) {
@@ -123,12 +123,12 @@ export default function LoginPage() {
                 <div className="space-y-3">
                   <Label htmlFor="username" className="text-foreground font-medium flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Username
+                    {credentials.role === 'STUDENT' ? 'NISN' : 'Username'}
                   </Label>
                   <Input
                     id="username"
                     type="text"
-                    placeholder="Masukkan username"
+                    placeholder={credentials.role === 'STUDENT' ? 'Masukkan NISN Anda' : 'Masukkan username'}
                     value={credentials.username}
                     onChange={(e) => handleInputChange('username', e.target.value)}
                     autoComplete="username"
@@ -136,6 +136,11 @@ export default function LoginPage() {
                     disabled={isLoading}
                     className="bg-input border-border text-foreground placeholder:text-muted-foreground hover:bg-accent focus:bg-accent transition-colors h-12"
                   />
+                  {credentials.role === 'STUDENT' && (
+                    <p className="text-sm text-muted-foreground">
+                      Gunakan NISN Anda sebagai username
+                    </p>
+                  )}
                 </div>
 
                 {/* Password Field */}
@@ -148,7 +153,7 @@ export default function LoginPage() {
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Masukkan password"
+                      placeholder={credentials.role === 'STUDENT' ? 'Masukkan tanggal lahir (DDMMYYYY)' : 'Masukkan password'}
                       value={credentials.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       autoComplete="current-password"
@@ -171,6 +176,11 @@ export default function LoginPage() {
                       )}
                     </Button>
                   </div>
+                  {credentials.role === 'STUDENT' && (
+                    <p className="text-sm text-muted-foreground">
+                      Gunakan tanggal lahir Anda dalam format DDMMYYYY (contoh: 15081995)
+                    </p>
+                  )}
                 </div>
 
                 {/* Error Alert */}

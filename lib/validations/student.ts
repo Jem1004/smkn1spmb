@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Gender, RegistrationStatus } from '@/types'
+import { Gender, StudentStatus } from '@/types'
 
 // Base validation schemas
 const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/
@@ -26,7 +26,7 @@ export const personalDataSchema = z.object({
       return age >= 15 && age <= 25
     }, 'Usia harus antara 15-25 tahun'),
   
-  gender: z.nativeEnum(Gender, {
+  gender: z.enum(['MALE', 'FEMALE'], {
     errorMap: () => ({ message: 'Jenis kelamin harus dipilih' })
   }),
   
@@ -251,7 +251,7 @@ export const studentUpdateSchema = z.object({
   nickname: z.string().max(50).optional(),
   birthPlace: z.string().min(2).max(50).optional(),
   birthDate: z.string().optional(),
-  gender: z.nativeEnum(Gender).optional(),
+  gender: z.enum(['MALE', 'FEMALE']).optional(),
   religion: z.string().min(1).max(30).optional(),
   nationality: z.string().min(1).max(30).optional(),
   address: z.string().min(10).max(200).optional(),
@@ -296,8 +296,8 @@ export const studentUpdateSchema = z.object({
   hasRaport: z.boolean().optional(),
   hasSertifikat: z.boolean().optional(),
   
-  // Registration status
-  registrationStatus: z.nativeEnum(RegistrationStatus).optional()
+  // Final status
+  finalStatus: z.enum(['PENDING', 'ACCEPTED', 'WAITLIST', 'REJECTED']).optional()
 })
 
 // Export types

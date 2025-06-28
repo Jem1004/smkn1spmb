@@ -1,0 +1,21 @@
+<svg width="144" height="144" viewBox="0 0 144 144" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="144" height="144" rx="18" fill="#2563eb"/>
+  <g transform="translate(24, 24)">
+    <!-- School building icon -->
+    <rect x="15" y="30" width="66" height="60" fill="white" rx="3"/>
+    <rect x="24" y="39" width="9" height="9" fill="#2563eb"/>
+    <rect x="39" y="39" width="9" height="9" fill="#2563eb"/>
+    <rect x="54" y="39" width="9" height="9" fill="#2563eb"/>
+    <rect x="69" y="39" width="9" height="9" fill="#2563eb"/>
+    <rect x="24" y="54" width="9" height="9" fill="#2563eb"/>
+    <rect x="39" y="54" width="9" height="9" fill="#2563eb"/>
+    <rect x="54" y="54" width="9" height="9" fill="#2563eb"/>
+    <rect x="69" y="54" width="9" height="9" fill="#2563eb"/>
+    <rect x="42" y="69" width="12" height="21" fill="#2563eb"/>
+    <!-- Flag pole -->
+    <rect x="48" y="6" width="1.5" height="24" fill="white"/>
+    <!-- Flag -->
+    <rect x="49.5" y="6" width="15" height="9" fill="#dc2626"/>
+    <rect x="49.5" y="15" width="15" height="9" fill="white"/>
+  </g>
+</svg>

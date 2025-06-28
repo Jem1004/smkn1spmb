@@ -1,257 +1,390 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { 
-  Plus, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+
+import { StudentDetailModal } from '@/components/ui/student-detail-modal';
+import { StudentEditModal } from '@/components/ui/student-edit-modal';
+import { StudentCreateModal } from '@/components/ui/student-create-modal';
+import { StudentWithRanking, StudentStatus } from '@/types';
+import { 
   Search, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Users, 
-  Trophy,
-  Download,
-  Filter
+  Trophy, 
+  CheckCircle, 
+  Clock, 
+  XCircle,
+  RefreshCw,
+  Plus,
+  Eye,
+  Pencil,
+  Trash
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { Student } from '@/types';
-import AdminLayout from '@/components/AdminLayout';
-import RankingDisplay from '@/modules/students/components/RankingDisplay';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth, authFetch } from '@/hooks/use-auth';
+import AdminLayout from '@/components/AdminLayout';
+import { useRouter } from 'next/navigation'
 
-// Mock data - dalam implementasi nyata, ini akan diambil dari API
-const mockStudents: Student[] = [
-  // Data contoh akan ditambahkan di sini
-];
+interface StudentsPageProps {}
 
-const StudentsPage = () => {
-  const [students, setStudents] = useState<Student[]>(mockStudents);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('list');
+const StudentsPage = ({}: StudentsPageProps) => {
   const router = useRouter();
+  const { user, loading: authLoading, error: authError } = useAuth('ADMIN');
+    const [students, setStudents] = useState<StudentWithRanking[]>([]);
+  const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StudentStatus | 'ALL'>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Modal states
+  const [selectedStudent, setSelectedStudent] = useState<StudentWithRanking | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Dalam implementasi nyata, fetch data dari API
-    fetchStudents();
-  }, []);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
+    if (authLoading || !user) return;
+    
+    setLoading(true);
     try {
-      // Simulasi API call
-      // const response = await fetch('/api/students');
-      // const data = await response.json();
-      // setStudents(data);
-      
-      // Untuk sementara menggunakan mock data
-      setStudents(mockStudents);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: '20',
+        search: searchTerm,
+        ...(statusFilter !== 'ALL' && { status: statusFilter })
+      });
+
+      const response = await authFetch(`/api/students?${params}`);
+            const result = await response.json();
+
+      if (result.success) {
+        setStudents(result.data.students);
+        setTotalPages(Math.ceil(result.data.pagination.total / 20));
+        if (result.data.stats) {
+          setStats(result.data.stats);
+        }
+      } else {
+        throw new Error(result.error || 'Failed to fetch data');
+      }
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Gagal memuat data siswa.',
-        variant: 'destructive',
+        description: 'Gagal memuat data siswa',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [authLoading, user, currentPage, searchTerm, statusFilter, toast]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+
+  // Show loading while authenticating
+  if (authLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Show error if authentication failed
+  if (authError || !user) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Authentication failed</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const handleViewDetail = (student: StudentWithRanking) => {
+    setSelectedStudent(student);
+    setShowDetailModal(true);
+  };
+
+  const handleEditStudent = (student: StudentWithRanking) => {
+    router.push(`/admin/students/edit/${student.id}`);
+  };
+
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus siswa ${studentName}?`)) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(`/api/students/${studentId}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Berhasil',
+          description: `Siswa ${studentName} berhasil dihapus`
+        });
+        fetchStudents();
+      } else {
+        throw new Error(result.message || 'Gagal menghapus siswa');
+      }
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Gagal menghapus siswa',
+        variant: 'destructive'
       });
     }
   };
 
-  const filteredStudents = students.filter(student =>
-    student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  const handleAddStudent = () => {
-    router.push('/admin/students/add');
-  };
-
-  const handleViewStudent = (studentId: string) => {
-    router.push(`/admin/students/view/${studentId}`);
-  };
-
-  const handleEditStudent = (studentId: string) => {
-    router.push(`/admin/students/edit/${studentId}`);
-  };
-
-  const handleDeleteStudent = async (studentId: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus data siswa ini?')) {
-      try {
-        // Dalam implementasi nyata, panggil API delete
-        // await fetch(`/api/students/${studentId}`, { method: 'DELETE' });
-        
-        setStudents(prev => prev.filter(s => s.id !== studentId));
-        toast({
-          title: 'Berhasil',
-          description: 'Data siswa berhasil dihapus.',
-        });
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Gagal menghapus data siswa.',
-          variant: 'destructive',
-        });
-      }
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: StudentStatus) => {
     switch (status) {
-      case 'DITERIMA':
-        return <Badge className="bg-green-100 text-green-800">Diterima</Badge>;
-      case 'CADANGAN':
-        return <Badge className="bg-yellow-100 text-yellow-800">Cadangan</Badge>;
-      case 'TIDAK_DITERIMA':
-        return <Badge className="bg-red-100 text-red-800">Tidak Diterima</Badge>;
-      case 'PENDING':
+      case 'APPROVED':
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Diterima</Badge>;
+      case 'REJECTED':
+        return <Badge className="bg-red-100 text-red-800"><XCircle className="h-3 w-3 mr-1" />Ditolak</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800">Pending</Badge>;
+        return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
     }
   };
+
+  
 
   return (
     <AdminLayout 
       title="Manajemen Siswa"
-      subtitle="Kelola data siswa dan lihat ranking penerimaan"
+      subtitle="Kelola penerimaan siswa berdasarkan ranking"
     >
-      <div className="space-y-6">
-        {/* Add Student Button */}
-        <div className="flex justify-end">
-          <Button onClick={handleAddStudent} className="flex items-center space-x-2">
-            <Plus className="w-4 h-4" />
-            <span>Tambah Siswa</span>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header with Add Button */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Daftar Siswa</h1>
+            <p className="text-muted-foreground">Kelola data siswa dan status penerimaan</p>
+          </div>
+          <Button onClick={() => router.push('/admin/students/add')} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Tambah Siswa Baru
           </Button>
         </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="list" className="flex items-center space-x-2">
-            <Users className="w-4 h-4" />
-            <span>Daftar Siswa</span>
-          </TabsTrigger>
-          <TabsTrigger value="ranking" className="flex items-center space-x-2">
-            <Trophy className="w-4 h-4" />
-            <span>Ranking & Status</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Tab Content: Daftar Siswa */}
-        <TabsContent value="list" className="space-y-6">
-          {/* Search and Filter */}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Filter className="h-5 w-5" />
-                <span>Filter dan Pencarian</span>
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Siswa</CardTitle>
+              <Trophy className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Cari nama atau email siswa..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Diterima</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.approved}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Ditolak</CardTitle>
+              <XCircle className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.rejected}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pending}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari nama siswa..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-                <Button variant="outline" className="flex items-center space-x-2">
-                  <Download className="w-4 h-4" />
-                  <span>Export Data</span>
+              </div>
+              <div className="flex gap-2">
+                {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((status) => (
+                  <Button
+                    key={status}
+                    variant={statusFilter === status ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setStatusFilter(status)}
+                  >
+                    {status === 'ALL' ? 'Semua' : 
+                     status === 'PENDING' ? 'Pending' :
+                     status === 'APPROVED' ? 'Diterima' : 'Ditolak'}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Students Table */}
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle>Daftar Siswa</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="text-center py-8">
+                  <p>Memuat data...</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[80px] hidden sm:table-cell">Ranking</TableHead>
+                      <TableHead>Nama</TableHead>
+                      <TableHead className="hidden md:table-cell">Jurusan</TableHead>
+                      <TableHead className="w-[100px] hidden lg:table-cell">Skor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="hidden lg:table-cell">Tgl Daftar</TableHead>
+                      <TableHead className="text-right w-[180px]">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {students.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium hidden sm:table-cell">
+                          {student.ranking?.rank || '-'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{student.fullName}</div>
+                          <div className="text-sm text-muted-foreground md:hidden">
+                            {student.selectedMajor}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{student.selectedMajor}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{student.ranking?.totalScore.toFixed(2) || '-'}</TableCell>
+                        <TableCell>{getStatusBadge(student.finalStatus)}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{new Date(student.createdAt).toLocaleDateString('id-ID')}</TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleViewDetail(student)}
+                              title="Lihat Detail"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                               variant="outline"
+                               size="icon"
+                               onClick={() => handleEditStudent(student)}
+                               title="Edit"
+                             >
+                               <Pencil className="h-4 w-4" />
+                             </Button>
+                             <Button
+                               variant="destructive"
+                               size="icon"
+                               onClick={() => handleDeleteStudent(student.id, student.fullName)}
+                               title="Hapus"
+                             >
+                               <Trash className="h-4 w-4" />
+                             </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4 p-4 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Sebelumnya
+                </Button>
+                <span className="text-sm">
+                  Halaman {currentPage} dari {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Selanjutnya
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Students Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Daftar Siswa ({filteredStudents.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3 font-semibold">Nama Lengkap</th>
-                      <th className="text-left p-3 font-semibold">Email</th>
-                      <th className="text-left p-3 font-semibold">Jurusan Pilihan</th>
-                      <th className="text-left p-3 font-semibold">Status</th>
-                      <th className="text-left p-3 font-semibold">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStudents.length > 0 ? (
-                      filteredStudents.map((student) => (
-                        <tr key={student.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3 font-medium">{student.fullName}</td>
-                          <td className="p-3">{student.email || '-'}</td>
-                          <td className="p-3">
-                            <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                              {student.selectedMajor || 'Belum dipilih'}
-                            </span>
-                          </td>
-                          <td className="p-3">
-                            {getStatusBadge(student.registrationStatus || 'PENDING')}
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleViewStudent(student.id)}
-                                className="flex items-center space-x-1"
-                              >
-                                <Eye className="w-3 h-3" />
-                                <span>Lihat</span>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEditStudent(student.id)}
-                                className="flex items-center space-x-1"
-                              >
-                                <Edit className="w-3 h-3" />
-                                <span>Edit</span>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteStudent(student.id)}
-                                className="flex items-center space-x-1 text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                <span>Hapus</span>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className="p-8 text-center text-gray-500">
-                          {searchTerm ? 'Tidak ada siswa yang sesuai dengan pencarian' : 'Belum ada data siswa'}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab Content: Ranking & Status */}
-        <TabsContent value="ranking">
-          <RankingDisplay students={students} />
-        </TabsContent>
-      </Tabs>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Modals */}
+      {showDetailModal && selectedStudent && (
+        <StudentDetailModal
+          student={selectedStudent}
+          open={showDetailModal}
+          onOpenChange={(open) => {
+            setShowDetailModal(open);
+            if (!open) setSelectedStudent(null);
+          }}
+        />
+      )}
+
+      
+
+      
     </AdminLayout>
   );
 };

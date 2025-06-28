@@ -59,13 +59,7 @@ const RankingDisplay: React.FC<RankingDisplayProps> = ({ students }) => {
             Diterima
           </Badge>
         );
-      case 'CADANGAN':
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
-            <Clock className="w-3 h-3 mr-1" />
-            Cadangan
-          </Badge>
-        );
+
       case 'TIDAK_DITERIMA':
         return (
           <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
@@ -174,19 +168,6 @@ const RankingDisplay: React.FC<RankingDisplayProps> = ({ students }) => {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-8 w-8 text-yellow-600" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Cadangan</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {Object.values(statistics).reduce((sum, stat) => sum + stat.waitlist, 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
         
         <Card>
           <CardContent className="p-6">
@@ -232,10 +213,6 @@ const RankingDisplay: React.FC<RankingDisplayProps> = ({ students }) => {
                     <div className="flex justify-between">
                       <span className="text-green-600">Diterima:</span>
                       <span className="font-medium text-green-600">{stat.accepted}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-yellow-600">Cadangan:</span>
-                      <span className="font-medium text-yellow-600">{stat.waitlist}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Skor Tertinggi:</span>

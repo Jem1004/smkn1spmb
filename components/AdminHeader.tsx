@@ -19,7 +19,7 @@ export default function AdminHeader({
   title, 
   subtitle, 
   showBackButton = false, 
-  backUrl = '/admin/dashboard',
+  backUrl = '/admin/students',
   className
 }: AdminHeaderProps) {
   const router = useRouter()
@@ -36,8 +36,8 @@ export default function AdminHeader({
     router.push(backUrl)
   }
 
-  const handleDashboard = () => {
-    router.push('/admin/dashboard')
+  const handleStudents = () => {
+    router.push('/admin/students')
   }
 
   return (
@@ -57,7 +57,7 @@ export default function AdminHeader({
                 className="border-2 hover:bg-accent hover:text-accent-foreground transition-all duration-200 rounded-xl shadow-md hover:shadow-lg w-fit"
               >
                 <Home className="h-4 w-4 mr-2" />
-                Dashboard
+                Students
               </Button>
             )}
             <div>
@@ -88,13 +88,13 @@ export default function AdminHeader({
             {/* Action Buttons */}
             <div className="flex space-x-3">
               <Button 
-                onClick={handleDashboard} 
+                onClick={handleStudents} 
                 variant="outline" 
                 size="sm"
                 className="border-2 hover:bg-accent hover:text-accent-foreground transition-all duration-200 rounded-xl shadow-md hover:shadow-lg"
               >
                 <Home className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Dashboard</span>
+                <span className="hidden sm:inline">Students</span>
               </Button>
               
               <Button 

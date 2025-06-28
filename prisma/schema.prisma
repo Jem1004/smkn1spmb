@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -14,10 +14,11 @@ model User {
   id       String @id @default(cuid())
   username String @unique
   password String
-  role     Role   @default(STUDENT)
+  role     String @default("STUDENT")
 
   // Relasi ke Student jika role adalah STUDENT
   student Student?
+  processLogs StudentProcessLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -34,7 +35,7 @@ model Student {
   fullName      String
   birthPlace    String
   birthDate     DateTime
-  gender        Gender
+  gender        String
   religion      String
   nationality   String   @default("Indonesia")
   address       String
@@ -75,7 +76,7 @@ model Student {
   // Pilihan Jurusan
   selectedMajor    String
 
-  // Status Dokumen
+  // Status Dokumen (tetap untuk tracking upload)
   hasIjazah     Boolean @default(false)
   hasSKHUN      Boolean @default(false)
   hasKK         Boolean @default(false)
@@ -84,11 +85,15 @@ model Student {
   hasRaport     Boolean @default(false)
   hasSertifikat Boolean @default(false)
 
-  // Status Pendaftaran
-  registrationStatus RegistrationStatus @default(PENDING)
+  // Status Penerimaan Sederhana
+  finalStatus   String    @default("PENDING") // PENDING, APPROVED, REJECTED, WAITLIST
+  adminNotes    String?   @db.Text
+  processedAt   DateTime?
+  processedBy   String?
 
-  // Relasi ke Ranking
+  // Relasi ke Ranking dan Process Log
   ranking Ranking?
+  processLogs StudentProcessLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -123,19 +128,33 @@ model Ranking {
   @@map("rankings")
 }
 
-enum Role {
-  ADMIN
-  STUDENT
+model StudentProcessLog {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  action      String   // ACCEPT, REJECT
+  reason      String?  @db.Text
+  processedBy String
+  processor   User     @relation(fields: [processedBy], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@map("student_process_logs")
 }
 
-enum Gender {
-  MALE
-  FEMALE
+model Quota {
+  id        String @id @default(cuid())
+  majorCode String @unique
+  majorName String
+  quota     Int    @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("quotas")
 }
 
-enum RegistrationStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  COMPLETED
-}
+// Enum values as constants
+// Role: ADMIN, STUDENT
+// Gender: MALE, FEMALE  
+// RegistrationStatus: PENDING, APPROVED, REJECTED, COMPLETED
+// DocumentStatus: PENDING, VERIFIED, REJECTED, REVISION_REQUESTED

@@ -152,6 +152,15 @@ export function generatePassword(): string {
   return password
 }
 
+// Generate password from birth date (DDMMYYYY format)
+export function generatePasswordFromBirthDate(birthDate: string | Date): string {
+  const date = new Date(birthDate)
+  const day = date.getDate().toString().padStart(2, '0')
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const year = date.getFullYear().toString()
+  return `${day}${month}${year}` // Format: DDMMYYYY
+}
+
 // Hash password using bcrypt
 export async function hashPassword(password: string): Promise<string> {
   const saltRounds = 12

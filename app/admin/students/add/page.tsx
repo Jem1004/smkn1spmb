@@ -34,7 +34,7 @@ export default function AddStudentPage() {
         {/* Form */}
         <StudentFormWizard 
           mode="create"
-          onCancel={() => router.push('/admin/dashboard')}
+          onCancel={() => router.push('/admin/students')}
         />
       </div>
     </AdminLayout>

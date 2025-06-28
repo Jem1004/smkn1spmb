@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - PPDB SMK</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+    
+    .offline-container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 90%;
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .offline-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+    
+    h1 {
+      color: #2563eb;
+      margin-bottom: 16px;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    p {
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      font-size: 16px;
+    }
+    
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    button:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .secondary-button {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    .secondary-button:hover {
+      background: #e5e7eb;
+    }
+    
+    .status {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .status.online {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    
+    .status.offline {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    
+    .features {
+      margin-top: 24px;
+      text-align: left;
+    }
+    
+    .features h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: #374151;
+    }
+    
+    .features ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .features li {
+      padding: 8px 0;
+      color: #6b7280;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .features li::before {
+      content: '✓';
+      color: #10b981;
+      font-weight: bold;
+    }
+    
+    @media (max-width: 480px) {
+      .offline-container {
+        padding: 24px;
+        margin: 20px;
+      }
+      
+      h1 {
+        font-size: 20px;
+      }
+      
+      p {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <div class="offline-icon">📱</div>
+    <h1>Anda Sedang Offline</h1>
+    <p>Tidak ada koneksi internet saat ini. Beberapa fitur masih dapat digunakan dalam mode offline.</p>
+    
+    <div class="buttons">
+      <button onclick="checkConnection()" id="retryBtn">
+        <span>🔄</span>
+        Coba Lagi
+      </button>
+      <button class="secondary-button" onclick="goToCache()">
+        <span>📋</span>
+        Lihat Data Tersimpan
+      </button>
+    </div>
+    
+    <div id="status" class="status"></div>
+    
+    <div class="features">
+      <h3>Fitur Offline yang Tersedia:</h3>
+      <ul>
+        <li>Lihat data siswa yang sudah dimuat</li>
+        <li>Akses halaman yang pernah dikunjungi</li>
+        <li>Simpan form untuk dikirim nanti</li>
+        <li>Lihat ranking yang tersimpan</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    let isOnline = navigator.onLine;
+    
+    function updateStatus(online) {
+      const status = document.getElementById('status');
+      const retryBtn = document.getElementById('retryBtn');
+      
+      status.style.display = 'block';
+      
+      if (online) {
+        status.className = 'status online';
+        status.textContent = '✅ Koneksi tersedia! Halaman akan dimuat ulang...';
+        retryBtn.disabled = true;
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        status.className = 'status offline';
+        status.textContent = '❌ Masih tidak ada koneksi internet';
+        retryBtn.disabled = false;
+      }
+    }
+    
+    function checkConnection() {
+      const retryBtn = document.getElementById('retryBtn');
+      retryBtn.disabled = true;
+      retryBtn.innerHTML = '<span>⏳</span> Memeriksa...';
+      
+      // Try to fetch a small resource to test connectivity
+      fetch('/manifest.json', { 
+        method: 'HEAD',
+        cache: 'no-cache'
+      })
+      .then(() => {
+        updateStatus(true);
+      })
+      .catch(() => {
+        updateStatus(false);
+        retryBtn.disabled = false;
+        retryBtn.innerHTML = '<span>🔄</span> Coba Lagi';
+      });
+    }
+    
+    function goToCache() {
+      // Try to navigate to cached pages
+      if ('serviceWorker' in navigator) {
+        // Check if we have cached data
+        caches.keys().then(cacheNames => {
+          if (cacheNames.length > 0) {
+            // Navigate to the main page which should be cached
+            window.location.href = '/';
+          } else {
+            alert('Tidak ada data yang tersimpan untuk mode offline.');
+          }
+        });
+      } else {
+        alert('Browser Anda tidak mendukung fitur offline.');
+      }
+    }
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => {
+      updateStatus(true);
+    });
+    
+    window.addEventListener('offline', () => {
+      updateStatus(false);
+    });
+    
+    // Check initial connection status
+    if (isOnline) {
+      // If we're online but still seeing this page, there might be a network issue
+      setTimeout(checkConnection, 1000);
+    }
+    
+    // Auto-retry every 30 seconds
+    setInterval(() => {
+      if (!navigator.onLine) {
+        checkConnection();
+      }
+    }, 30000);
+  </script>
+</body>
+</html>

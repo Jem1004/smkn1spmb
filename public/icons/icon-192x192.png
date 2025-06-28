@@ -1,0 +1,23 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="24" fill="#2563eb"/>
+  <g transform="translate(32, 32)">
+    <!-- School building icon -->
+    <rect x="20" y="40" width="88" height="80" fill="white" rx="4"/>
+    <rect x="32" y="52" width="12" height="12" fill="#2563eb"/>
+    <rect x="52" y="52" width="12" height="12" fill="#2563eb"/>
+    <rect x="72" y="52" width="12" height="12" fill="#2563eb"/>
+    <rect x="92" y="52" width="12" height="12" fill="#2563eb"/>
+    <rect x="32" y="72" width="12" height="12" fill="#2563eb"/>
+    <rect x="52" y="72" width="12" height="12" fill="#2563eb"/>
+    <rect x="72" y="72" width="12" height="12" fill="#2563eb"/>
+    <rect x="92" y="72" width="12" height="12" fill="#2563eb"/>
+    <rect x="56" y="92" width="16" height="28" fill="#2563eb"/>
+    <!-- Flag pole -->
+    <rect x="64" y="8" width="2" height="32" fill="white"/>
+    <!-- Flag -->
+    <rect x="66" y="8" width="20" height="12" fill="#dc2626"/>
+    <rect x="66" y="20" width="20" height="12" fill="white"/>
+    <!-- Text PPDB -->
+    <text x="64" y="140" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">PPDB</text>
+  </g>
+</svg>

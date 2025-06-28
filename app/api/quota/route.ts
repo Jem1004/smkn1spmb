@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authenticateRequest } from '@/lib/auth'
 import { 
   getCurrentQuotas, 
   updateMultipleQuotas, 
@@ -11,24 +10,26 @@ import {
 // GET /api/quota - Get current quota configuration
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate request
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get user info from request headers (set by client)
+    const userId = request.headers.get('x-user-id')
+    const userRole = request.headers.get('x-user-role')
+    
+    if (!userId || !userRole) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized - Missing user information' },
         { status: 401 }
       )
     }
 
     // Only admin can access quota data
-    if (authResult.user?.role !== 'ADMIN') {
+    if (userRole !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya admin yang dapat mengakses data kuota.' },
         { status: 403 }
       )
     }
 
-    const quotas = getCurrentQuotas()
+    const quotas = await getCurrentQuotas()
     const statistics = getQuotaStatistics(quotas)
 
     return NextResponse.json({
@@ -50,17 +51,19 @@ export async function GET(request: NextRequest) {
 // PUT /api/quota - Update quota configuration
 export async function PUT(request: NextRequest) {
   try {
-    // Authenticate request
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get user info from request headers (set by client)
+    const userId = request.headers.get('x-user-id')
+    const userRole = request.headers.get('x-user-role')
+    
+    if (!userId || !userRole) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized - Missing user information' },
         { status: 401 }
       )
     }
 
     // Only admin can update quota
-    if (authResult.user?.role !== 'ADMIN') {
+    if (userRole !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya admin yang dapat mengubah kuota.' },
         { status: 403 }
@@ -90,11 +93,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update quotas
-    const updatedQuotas = updateMultipleQuotas(quotas)
+    const updatedQuotas = await updateMultipleQuotas(quotas)
     const statistics = getQuotaStatistics(updatedQuotas)
-
-    // Here you would typically save to database
-    // For now, we'll just return the updated data
     
     return NextResponse.json({
       success: true,
@@ -117,17 +117,19 @@ export async function PUT(request: NextRequest) {
 // POST /api/quota/reset - Reset quotas to default
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate request
-    const authResult = await authenticateRequest(request)
-    if (!authResult.success) {
+    // Get user info from request headers (set by client)
+    const userId = request.headers.get('x-user-id')
+    const userRole = request.headers.get('x-user-role')
+    
+    if (!userId || !userRole) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: 'Unauthorized - Missing user information' },
         { status: 401 }
       )
     }
 
     // Only admin can reset quota
-    if (authResult.user?.role !== 'ADMIN') {
+    if (userRole !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Akses ditolak. Hanya admin yang dapat mereset kuota.' },
         { status: 403 }
@@ -149,13 +151,15 @@ export async function POST(request: NextRequest) {
         'BDP': 36
       }
 
-      const statistics = getQuotaStatistics(defaultQuotas)
+      // Update quotas in database
+      const updatedQuotas = await updateMultipleQuotas(defaultQuotas)
+      const statistics = getQuotaStatistics(updatedQuotas)
 
       return NextResponse.json({
         success: true,
         message: 'Kuota berhasil direset ke nilai default',
         data: {
-          quotas: defaultQuotas,
+          quotas: updatedQuotas,
           statistics
         }
       })

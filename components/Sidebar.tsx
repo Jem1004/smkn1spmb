@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import React from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -40,11 +40,6 @@ interface NavItem {
 }
 
 const navigationItems: NavItem[] = [
-  {
-    title: 'Dashboard',
-    href: '/admin/dashboard',
-    icon: Home,
-  },
   {
     title: 'Manajemen Siswa',
     href: '/admin/students',

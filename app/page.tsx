@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -8,15 +8,31 @@ import { Card, CardContent } from '@/components/ui/card'
 export default function HomePage() {
   const router = useRouter()
   const { data: session, status } = useSession()
+  const [loadingTimeout, setLoadingTimeout] = useState(false)
 
   useEffect(() => {
-    // Don't redirect while still loading
-    if (status === 'loading') return
+    // Set timeout untuk loading state
+    const timer = setTimeout(() => {
+      setLoadingTimeout(true)
+    }, 5000) // 5 detik timeout
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    // Force redirect jika loading terlalu lama
+    if (loadingTimeout && status === 'loading') {
+      router.push('/login')
+      return
+    }
+
+    // Don't redirect while still loading (dengan timeout)
+    if (status === 'loading' && !loadingTimeout) return
     
     if (status === 'authenticated' && session?.user) {
       // Redirect berdasarkan role
       if (session.user.role === 'ADMIN') {
-        router.push('/admin/dashboard')
+        router.push('/admin/students')
       } else if (session.user.role === 'STUDENT') {
         router.push('/student/status')
       }
@@ -24,7 +40,7 @@ export default function HomePage() {
       // Redirect ke login jika belum login
       router.push('/login')
     }
-  }, [session, status, router])
+  }, [session, status, router, loadingTimeout])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -35,7 +51,7 @@ export default function HomePage() {
             PPDB SMK Digital
           </h2>
           <p className="text-sm text-muted-foreground text-center">
-            Memuat aplikasi...
+            {loadingTimeout ? 'Mengarahkan ke login...' : 'Memuat aplikasi...'}
           </p>
         </CardContent>
       </Card>

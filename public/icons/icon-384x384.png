@@ -1,0 +1,30 @@
+<svg width="384" height="384" viewBox="0 0 384 384" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="384" height="384" rx="48" fill="#2563eb"/>
+  <g transform="translate(60, 60)">
+    <!-- School building icon -->
+    <rect x="38" y="78" width="188" height="186" fill="white" rx="8"/>
+    <rect x="63" y="108" width="25" height="25" fill="#2563eb"/>
+    <rect x="98" y="108" width="25" height="25" fill="#2563eb"/>
+    <rect x="133" y="108" width="25" height="25" fill="#2563eb"/>
+    <rect x="168" y="108" width="25" height="25" fill="#2563eb"/>
+    <rect x="203" y="108" width="25" height="25" fill="#2563eb"/>
+    <rect x="63" y="143" width="25" height="25" fill="#2563eb"/>
+    <rect x="98" y="143" width="25" height="25" fill="#2563eb"/>
+    <rect x="133" y="143" width="25" height="25" fill="#2563eb"/>
+    <rect x="168" y="143" width="25" height="25" fill="#2563eb"/>
+    <rect x="203" y="143" width="25" height="25" fill="#2563eb"/>
+    <rect x="63" y="178" width="25" height="25" fill="#2563eb"/>
+    <rect x="98" y="178" width="25" height="25" fill="#2563eb"/>
+    <rect x="133" y="178" width="25" height="25" fill="#2563eb"/>
+    <rect x="168" y="178" width="25" height="25" fill="#2563eb"/>
+    <rect x="203" y="178" width="25" height="25" fill="#2563eb"/>
+    <rect x="113" y="213" width="38" height="51" fill="#2563eb"/>
+    <!-- Flag pole -->
+    <rect x="132" y="15" width="5" height="63" fill="white"/>
+    <!-- Flag -->
+    <rect x="137" y="15" width="40" height="25" fill="#dc2626"/>
+    <rect x="137" y="40" width="40" height="25" fill="white"/>
+    <!-- Text PPDB -->
+    <text x="132" y="300" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="bold">PPDB SMK</text>
+  </g>
+</svg>

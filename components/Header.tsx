@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
@@ -23,10 +23,10 @@ interface HeaderProps {
 }
 
 export default function Header({ 
-  title = "Dashboard", 
+  title = "Admin Panel", 
   subtitle, 
   showBackButton = false, 
-  backUrl = '/admin/dashboard',
+  backUrl = '/admin/students',
   onMenuToggle,
   className
 }: HeaderProps) {

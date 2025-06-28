@@ -1,0 +1,61 @@
+<svg width="390" height="844" viewBox="0 0 390 844" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Mobile screenshot mockup -->
+  <rect width="390" height="844" fill="#f8fafc"/>
+  
+  <!-- Status bar -->
+  <rect x="0" y="0" width="390" height="44" fill="#000000"/>
+  <text x="20" y="28" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">9:41</text>
+  <text x="320" y="28" fill="white" font-family="Arial, sans-serif" font-size="14">100%</text>
+  
+  <!-- Header -->
+  <rect x="0" y="44" width="390" height="80" fill="#2563eb"/>
+  <text x="20" y="90" fill="white" font-family="Arial, sans-serif" font-size="20" font-weight="bold">Status Pendaftaran</text>
+  
+  <!-- Profile card -->
+  <rect x="20" y="144" width="350" height="200" rx="16" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  <circle cx="70" cy="194" r="30" fill="#dbeafe"/>
+  <text x="70" y="200" text-anchor="middle" fill="#2563eb" font-family="Arial, sans-serif" font-size="24">👤</text>
+  
+  <text x="120" y="180" fill="#111827" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Ahmad Rizki Pratama</text>
+  <text x="120" y="200" fill="#6b7280" font-family="Arial, sans-serif" font-size="14">NISN: 1234567890</text>
+  <text x="120" y="220" fill="#6b7280" font-family="Arial, sans-serif" font-size="14">Jurusan: Teknik Komputer Jaringan</text>
+  
+  <!-- Status badge -->
+  <rect x="120" y="230" width="100" height="30" rx="15" fill="#dcfce7"/>
+  <text x="170" y="248" text-anchor="middle" fill="#166534" font-family="Arial, sans-serif" font-size="12" font-weight="bold">✓ DITERIMA</text>
+  
+  <!-- Info cards -->
+  <rect x="20" y="364" width="350" height="120" rx="12" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="40" y="390" fill="#111827" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Informasi Pendaftaran</text>
+  <text x="40" y="415" fill="#6b7280" font-family="Arial, sans-serif" font-size="14">Tanggal Daftar: 15 Januari 2024</text>
+  <text x="40" y="435" fill="#6b7280" font-family="Arial, sans-serif" font-size="14">Nomor Pendaftaran: REG-2024-001</text>
+  <text x="40" y="455" fill="#6b7280" font-family="Arial, sans-serif" font-size="14">Total Skor: 85.5</text>
+  <text x="40" y="475" fill="#6b7280" font-family="Arial, sans-serif" font-size="14">Ranking: 12 dari 150</text>
+  
+  <!-- Action buttons -->
+  <rect x="20" y="504" width="350" height="50" rx="12" fill="#2563eb"/>
+  <text x="195" y="532" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">📄 Lihat Detail</text>
+  
+  <rect x="20" y="574" width="170" height="50" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
+  <text x="105" y="602" text-anchor="middle" fill="#374151" font-family="Arial, sans-serif" font-size="16" font-weight="bold">🔄 Refresh</text>
+  
+  <rect x="200" y="574" width="170" height="50" rx="12" fill="#dc2626"/>
+  <text x="285" y="602" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">🚪 Logout</text>
+  
+  <!-- Timeline -->
+  <rect x="20" y="644" width="350" height="160" rx="12" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="40" y="670" fill="#111827" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Timeline Pendaftaran</text>
+  
+  <!-- Timeline items -->
+  <circle cx="50" cy="695" r="4" fill="#16a34a"/>
+  <text x="70" y="700" fill="#374151" font-family="Arial, sans-serif" font-size="14">Pendaftaran Diterima</text>
+  <text x="70" y="715" fill="#6b7280" font-family="Arial, sans-serif" font-size="12">20 Jan 2024, 14:30</text>
+  
+  <circle cx="50" cy="735" r="4" fill="#16a34a"/>
+  <text x="70" y="740" fill="#374151" font-family="Arial, sans-serif" font-size="14">Verifikasi Berkas</text>
+  <text x="70" y="755" fill="#6b7280" font-family="Arial, sans-serif" font-size="12">18 Jan 2024, 10:15</text>
+  
+  <circle cx="50" cy="775" r="4" fill="#16a34a"/>
+  <text x="70" y="780" fill="#374151" font-family="Arial, sans-serif" font-size="14">Pendaftaran Dikirim</text>
+  <text x="70" y="795" fill="#6b7280" font-family="Arial, sans-serif" font-size="12">15 Jan 2024, 09:00</text>
+</svg>

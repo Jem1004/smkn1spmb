@@ -3,11 +3,18 @@ import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
+// Helper function to generate password from birth date
+function generatePasswordFromBirthDate(birthDate: Date): string {
+  const day = birthDate.getDate().toString().padStart(2, '0')
+  const month = (birthDate.getMonth() + 1).toString().padStart(2, '0')
+  const year = birthDate.getFullYear().toString()
+  return `${day}${month}${year}`
+}
+
 async function main() {
   console.log('🌱 Starting database seeding...')
 
-  // Hash password untuk semua user
-  const hashedPassword = await bcrypt.hash('password123', 10)
+  // Hash password untuk admin
   const hashedAdminPassword = await bcrypt.hash('admin123', 10)
 
   // 1. Buat User Admin
@@ -25,7 +32,6 @@ async function main() {
   // 2. Buat User Siswa dan Data Siswa
   const studentsData = [
     {
-      username: 'siswa001',
       fullName: 'Ahmad Rizki Pratama',
       birthPlace: 'Jakarta',
       birthDate: new Date('2007-03-15'),
@@ -70,7 +76,7 @@ async function main() {
       hasFoto: true,
       hasRaport: true,
       hasSertifikat: false,
-      registrationStatus: 'APPROVED',
+      finalStatus: 'ACCEPTED',
       ranking: {
         indonesianScore: 85.5,
         englishScore: 78.0,
@@ -85,7 +91,6 @@ async function main() {
       }
     },
     {
-      username: 'siswa002',
       fullName: 'Sari Dewi Lestari',
       birthPlace: 'Bandung',
       birthDate: new Date('2007-07-22'),
@@ -130,7 +135,7 @@ async function main() {
       hasFoto: true,
       hasRaport: true,
       hasSertifikat: true,
-      registrationStatus: 'APPROVED',
+      finalStatus: 'ACCEPTED',
       ranking: {
         indonesianScore: 90.0,
         englishScore: 85.5,
@@ -145,7 +150,6 @@ async function main() {
       }
     },
     {
-      username: 'siswa003',
       fullName: 'Budi Santoso',
       birthPlace: 'Surabaya',
       birthDate: new Date('2007-11-10'),
@@ -190,7 +194,7 @@ async function main() {
       hasFoto: true,
       hasRaport: false,
       hasSertifikat: true,
-      registrationStatus: 'PENDING',
+      finalStatus: 'PENDING',
       ranking: {
         indonesianScore: 82.0,
         englishScore: 88.0,
@@ -205,7 +209,6 @@ async function main() {
       }
     },
     {
-      username: 'siswa004',
       fullName: 'Indira Putri Maharani',
       birthPlace: 'Yogyakarta',
       birthDate: new Date('2007-05-18'),
@@ -250,7 +253,7 @@ async function main() {
       hasFoto: true,
       hasRaport: true,
       hasSertifikat: true,
-      registrationStatus: 'COMPLETED',
+      finalStatus: 'WAITLIST',
       ranking: {
         indonesianScore: 88.0,
         englishScore: 82.5,
@@ -265,7 +268,6 @@ async function main() {
       }
     },
     {
-      username: 'siswa005',
       fullName: 'Reza Firmansyah',
       birthPlace: 'Medan',
       birthDate: new Date('2007-09-03'),
@@ -310,7 +312,7 @@ async function main() {
       hasFoto: true,
       hasRaport: true,
       hasSertifikat: false,
-      registrationStatus: 'REJECTED',
+      finalStatus: 'REJECTED',
       ranking: {
         indonesianScore: 75.0,
         englishScore: 70.0,
@@ -328,7 +330,12 @@ async function main() {
 
   // Buat user dan siswa untuk setiap data
   for (const studentData of studentsData) {
-    const { username, ranking, ...studentInfo } = studentData
+    const { ranking, ...studentInfo } = studentData
+    
+    // Use NISN as username and birth date as password
+    const username = studentInfo.nisn
+    const password = generatePasswordFromBirthDate(studentInfo.birthDate)
+    const hashedPassword = await bcrypt.hash(password, 10)
     
     // Buat user
     const user = await prisma.user.upsert({
@@ -349,7 +356,7 @@ async function main() {
         userId: user.id,
         ...studentInfo,
         gender: studentInfo.gender as 'MALE' | 'FEMALE', // Cast gender to literal union type
-        registrationStatus: studentInfo.registrationStatus as 'PENDING' | 'APPROVED' | 'COMPLETED' | 'REJECTED', // Cast registrationStatus to literal union type
+        finalStatus: (studentInfo.finalStatus || 'PENDING') as 'PENDING' | 'ACCEPTED' | 'WAITLIST' | 'REJECTED', // Cast finalStatus to literal union type
       },
       include: {
         ranking: true
@@ -366,13 +373,19 @@ async function main() {
       },
     })
 
-    console.log(`✅ Student created: ${studentInfo.fullName} (${username})`)
+    console.log(`✅ Student created: ${studentInfo.fullName} (${username}, password: ${password})`)
   }
 
   console.log('🎉 Database seeding completed!')
   console.log('\n📋 Summary:')
   console.log('- 1 Admin user (username: admin, password: admin123)')
-  console.log('- 5 Student users (username: siswa001-siswa005, password: password123)')
+  console.log('- 5 Student users (username: NISN, password: tanggal lahir DDMMYYYY)')
+  console.log('- Student login examples:')
+  console.log('  * NISN: 1234567890, Password: 15032007 (Ahmad Rizki Pratama)')
+  console.log('  * NISN: 1234567891, Password: 22072007 (Sari Dewi Lestari)')
+  console.log('  * NISN: 1234567892, Password: 10112007 (Budi Santoso)')
+  console.log('  * NISN: 1234567893, Password: 18052007 (Indira Putri Maharani)')
+  console.log('  * NISN: 1234567894, Password: 03092007 (Reza Firmansyah)')
   console.log('- Complete student data with rankings')
   console.log('- Various registration statuses for testing')
 }

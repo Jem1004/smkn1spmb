@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
-import { ApiResponse, AuthSession } from '@/types'
+import { ApiResponse, AuthSession, Role } from '@/types'
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: user.id,
         username: user.username,
-        role: user.role
+        role: user.role as Role
       },
       token
     }

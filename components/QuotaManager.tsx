@@ -18,6 +18,7 @@ import {
 import { MAJOR_QUOTAS } from '@/lib/ranking'
 import { AVAILABLE_MAJORS, MajorType } from '@/types'
 import { useToast } from '@/hooks/use-toast'
+import { authFetch } from '@/hooks/use-auth'
 
 interface QuotaData {
   [key: string]: number
@@ -32,7 +33,34 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ onQuotaUpdate }) => {
   const [originalQuotas, setOriginalQuotas] = useState<QuotaData>(MAJOR_QUOTAS)
   const [isModified, setIsModified] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
+
+  // Load quotas from API on component mount
+  useEffect(() => {
+    const loadQuotas = async () => {
+      try {
+        const response = await authFetch('/api/quota')
+        const result = await response.json()
+        
+        if (response.ok && result.data?.quotas) {
+          setQuotas(result.data.quotas)
+          setOriginalQuotas(result.data.quotas)
+        }
+      } catch (error) {
+        console.error('Error loading quotas:', error)
+        toast({
+          title: "Error",
+          description: "Gagal memuat data kuota",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadQuotas()
+  }, [toast])
 
   useEffect(() => {
     const hasChanges = Object.keys(quotas).some(
@@ -54,22 +82,22 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ onQuotaUpdate }) => {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const response = await fetch('/api/quota', {
+      const response = await authFetch('/api/quota', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ quotas })
       })
 
       const result = await response.json()
 
       if (response.ok) {
-        setOriginalQuotas(quotas)
+        // Update with the actual data returned from API
+        const updatedQuotas = result.data?.quotas || quotas
+        setQuotas(updatedQuotas)
+        setOriginalQuotas(updatedQuotas)
         setIsModified(false)
         
         if (onQuotaUpdate) {
-          onQuotaUpdate(quotas)
+          onQuotaUpdate(updatedQuotas)
         }
         
         toast({
@@ -114,6 +142,14 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ onQuotaUpdate }) => {
   const getMajorName = (majorCode: string) => {
     const major = AVAILABLE_MAJORS.find(m => m === majorCode)
     return major || majorCode
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuthStore } from '@/store/auth-store'
 import { Student } from '@/types'
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Save, Edit, GraduationCap } from 'lucide-react'
 import StudentFormWizard from '@/modules/students/components/StudentFormWizard'
 import AdminLayout from '@/components/AdminLayout'
+import { authFetch } from '@/hooks/use-auth'
 
 export default function EditStudentPage() {
   const router = useRouter()
@@ -18,23 +19,10 @@ export default function EditStudentPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'ADMIN') {
-      router.push('/login')
-      return
-    }
-
-    fetchStudent()
-  }, [isAuthenticated, user, params.id])
-
-  const fetchStudent = async () => {
+  const fetchStudent = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/students/${params.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await authFetch(`/api/students/${params.id}`)
 
       if (!response.ok) {
         throw new Error('Failed to fetch student data')
@@ -47,20 +35,25 @@ export default function EditStudentPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.id])
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'ADMIN') {
+      router.push('/login')
+      return
+    }
+
+    fetchStudent()
+  }, [isAuthenticated, user, params.id, fetchStudent, router])
 
   const handleBack = () => {
-    router.push('/admin/dashboard')
+    router.push('/admin/students')
   }
 
   const handleSave = async (formData: any) => {
     try {
-      const response = await fetch(`/api/students/${params.id}`, {
+      const response = await authFetch(`/api/students/${params.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify(formData)
       })
 
@@ -69,7 +62,7 @@ export default function EditStudentPage() {
       }
 
       alert('Data siswa berhasil diperbarui')
-      router.push('/admin/dashboard')
+      router.push('/admin/students')
     } catch (err) {
       alert('Gagal memperbarui data siswa')
     }

@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import React from 'react'
 import { useSession } from 'next-auth/react'
@@ -21,7 +21,7 @@ export default function AdminLayout({
   title,
   subtitle,
   showBackButton = false,
-  backUrl = '/admin/dashboard',
+  backUrl = '/admin/students',
   className
 }: AdminLayoutProps) {
   const { data: session, status } = useSession()

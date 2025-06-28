@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { CheckCircle, Circle, ArrowLeft, ArrowRight, Save, Send } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { authFetch } from '@/hooks/use-auth'
 import FormPersonal from './FormPersonal'
 import FormParent from './FormParent'
 import FormEducation from './FormEducation'
@@ -92,7 +93,7 @@ export default function StudentFormWizard({
 }: StudentFormWizardProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { token } = useAuthStore()
+  // Authentication handled by authFetch
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
@@ -204,15 +205,51 @@ export default function StudentFormWizard({
     try {
       setIsSubmitting(true)
 
+      // Validate required fields for authentication
+      if (!formData.education.nisn) {
+        toast({
+          variant: "destructive",
+          title: "Validasi Gagal",
+          description: "NISN harus diisi untuk membuat akun siswa"
+        })
+        return
+      }
+
+      if (!formData.personal.birthDate) {
+        toast({
+          variant: "destructive",
+          title: "Validasi Gagal",
+          description: "Tanggal lahir harus diisi untuk membuat password"
+        })
+        return
+      }
+
+      if (!formData.personal.fullName) {
+        toast({
+          variant: "destructive",
+          title: "Validasi Gagal",
+          description: "Nama lengkap harus diisi"
+        })
+        return
+      }
+
       if (onSubmit) {
-        await onSubmit({
+        // For custom submit handler, pass flattened data
+        const flattenedData = {
+          // Authentication fields
+          username: formData.education.nisn,
+          password: formData.personal.birthDate,
+          
+          // All other fields flattened
           ...formData.personal,
           ...formData.parent,
           ...formData.education,
           ...formData.major,
           ...formData.documents,
           ranking: formData.ranking
-        })
+        }
+        
+        await onSubmit(flattenedData)
       } else {
         // Default submit behavior
         const endpoint = mode === 'edit' && (initialData as any)?.id
@@ -221,22 +258,74 @@ export default function StudentFormWizard({
 
         const method = mode === 'edit' ? 'PUT' : 'POST'
 
-        // Prepare data in the correct structure for API
-        const submitData = {
-          personal: formData.personal,
-          parent: formData.parent,
-          education: formData.education,
-          major: formData.major,
-          document: formData.documents, // Note: API expects 'document' not 'documents'
+        // Prepare data in the correct flat structure for API
+        const submitData: any = {
+          // Authentication fields (only for create mode)
+          ...(mode === 'create' && {
+            username: formData.education.nisn, // Username = NISN
+            password: formData.personal.birthDate // Password = birth date
+          }),
+          
+          // Personal data (flattened)
+          fullName: formData.personal.fullName,
+          birthPlace: formData.personal.birthPlace,
+          birthDate: formData.personal.birthDate,
+          gender: formData.personal.gender,
+          religion: formData.personal.religion,
+          nationality: formData.personal.nationality,
+          address: formData.personal.address,
+          rt: formData.personal.rt,
+          rw: formData.personal.rw,
+          village: formData.personal.village,
+          district: formData.personal.district,
+          city: formData.personal.city,
+          province: formData.personal.province,
+          postalCode: formData.personal.postalCode,
+          phoneNumber: formData.personal.phoneNumber,
+          email: formData.personal.email,
+          childOrder: formData.personal.childOrder,
+          totalSiblings: formData.personal.totalSiblings,
+          height: formData.personal.height,
+          weight: formData.personal.weight,
+          medicalHistory: formData.personal.medicalHistory,
+          
+          // Parent data (flattened)
+          fatherName: formData.parent.fatherName,
+          fatherJob: formData.parent.fatherJob,
+          fatherEducation: formData.parent.fatherEducation,
+          motherName: formData.parent.motherName,
+          motherJob: formData.parent.motherJob,
+          motherEducation: formData.parent.motherEducation,
+          guardianName: formData.parent.guardianName,
+          guardianJob: formData.parent.guardianJob,
+          parentPhone: formData.parent.parentPhone,
+          parentAddress: formData.parent.parentAddress,
+          
+          // Education data (flattened)
+          schoolName: formData.education.schoolName,
+          npsn: formData.education.npsn,
+          nisn: formData.education.nisn,
+          graduationYear: formData.education.graduationYear,
+          certificateNumber: formData.education.certificateNumber,
+          
+          // Major choice (flattened)
+          selectedMajor: formData.major.selectedMajor,
+          
+          // Documents (flattened)
+          hasIjazah: formData.documents.hasIjazah,
+          hasSKHUN: formData.documents.hasSKHUN,
+          hasKK: formData.documents.hasKK,
+          hasAktaLahir: formData.documents.hasAktaLahir,
+          hasFoto: formData.documents.hasFoto,
+          hasRaport: formData.documents.hasRaport,
+          hasSertifikat: formData.documents.hasSertifikat,
+          
+          // Ranking data (as object)
           ranking: formData.ranking
         }
 
-        const response = await fetch(endpoint, {
+        const response = await authFetch(endpoint, {
           method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
           body: JSON.stringify(submitData)
         })
 
@@ -273,8 +362,8 @@ export default function StudentFormWizard({
           description: mode === 'edit' ? 'Data siswa berhasil diperbarui!' : 'Data siswa berhasil disimpan!'
         })
 
-        // Navigate back to dashboard
-        router.push('/admin/dashboard')
+        // Navigate back to students management page
+        router.push('/admin/students')
       }
     } catch (error) {
       console.error('Error submitting form:', error)
@@ -296,7 +385,7 @@ export default function StudentFormWizard({
     if (onCancel) {
       onCancel()
     } else {
-      router.push('/admin/dashboard')
+      router.push('/admin/students')
     }
   }
 

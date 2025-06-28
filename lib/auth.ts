@@ -1,9 +1,9 @@
-import jwt from 'jsonwebtoken'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 export interface JWTPayload {
   userId: string
@@ -126,7 +126,7 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error('Login error:', error)
-          throw new Error('Terjadi kesalahan saat login')
+          throw error
         }
       }
     })

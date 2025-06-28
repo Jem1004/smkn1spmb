@@ -1,34 +1,42 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: ppdb_postgres
+  mysql:
+    image: mysql:8.0
+    container_name: ppdb_mysql
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ppdb_user
-      POSTGRES_PASSWORD: ppdb_password
-      POSTGRES_DB: ppdb_smk
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: ppdb_smk
+      MYSQL_USER: ppdb_user
+      MYSQL_PASSWORD: ppdb_password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
     networks:
       - ppdb_network
+    command: --default-authentication-plugin=mysql_native_password
 
-  adminer:
-    image: adminer:latest
-    container_name: ppdb_adminer
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: ppdb_phpmyadmin
     restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ppdb_user
+      PMA_PASSWORD: ppdb_password
     ports:
-      - "8080:8080"
+      - "8080:80"
     networks:
       - ppdb_network
     depends_on:
-      - postgres
+      - mysql
 
 volumes:
-  postgres_data:
+  mysql_data:
 
 networks:
   ppdb_network:

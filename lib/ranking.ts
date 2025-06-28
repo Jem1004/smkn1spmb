@@ -1,4 +1,4 @@
-import { Student, StudentWithRanking, MajorType } from '@/types';
+import { Student, StudentWithRanking, MajorType, StudentStatus } from '@/types'
 
 // Kuota penerimaan per jurusan
 export const MAJOR_QUOTAS: Record<MajorType, number> = {
@@ -11,7 +11,7 @@ export const MAJOR_QUOTAS: Record<MajorType, number> = {
 };
 
 // Status penerimaan
-export type AcceptanceStatus = 'DITERIMA' | 'TIDAK_DITERIMA' | 'CADANGAN';
+export type AcceptanceStatus = 'DITERIMA' | 'TIDAK_DITERIMA';
 
 // Interface untuk ranking siswa
 export interface StudentRanking {
@@ -27,6 +27,7 @@ export interface StudentRanking {
   totalScore: number;
   rank: number;
   status: AcceptanceStatus;
+  finalStatus?: StudentStatus | null;
 }
 
 // Fungsi untuk menghitung total skor siswa
@@ -119,7 +120,8 @@ export function createMajorRankings(students: StudentWithRanking[]): Record<Majo
         accreditationPoints: 0,
         totalScore,
         rank: 0, // akan diisi setelah sorting
-        status: 'TIDAK_DITERIMA' // default, akan diupdate
+        status: 'TIDAK_DITERIMA', // default, akan diupdate
+        finalStatus: student.finalStatus,
       });
     }
   });
@@ -134,15 +136,20 @@ export function createMajorRankings(students: StudentWithRanking[]): Record<Majo
     // Assign ranking dan status
     rankings[majorKey].forEach((student, index) => {
       student.rank = index + 1;
-      
-      const quota = MAJOR_QUOTAS[majorKey];
-      if (index < quota) {
-        student.status = 'DITERIMA';
-      } else if (index < quota + Math.floor(quota * 0.1)) {
-        // 10% dari kuota sebagai cadangan
-        student.status = 'CADANGAN';
+
+      if (student.finalStatus) {
+        if (student.finalStatus === 'APPROVED') {
+          student.status = 'DITERIMA';
+        } else { // REJECTED or WAITLIST
+          student.status = 'TIDAK_DITERIMA';
+        }
       } else {
-        student.status = 'TIDAK_DITERIMA';
+        const quota = MAJOR_QUOTAS[majorKey];
+        if (index < quota) {
+          student.status = 'DITERIMA';
+        } else {
+          student.status = 'TIDAK_DITERIMA';
+        }
       }
     });
   });
@@ -174,7 +181,6 @@ export function getMajorStatistics(rankings: Record<MajorType, StudentRanking[]>
   const statistics: Record<MajorType, {
     totalApplicants: number;
     accepted: number;
-    waitlist: number;
     rejected: number;
     quota: number;
     highestScore: number;
@@ -184,13 +190,11 @@ export function getMajorStatistics(rankings: Record<MajorType, StudentRanking[]>
   Object.entries(rankings).forEach(([major, students]) => {
     const majorKey = major as MajorType;
     const accepted = students.filter(s => s.status === 'DITERIMA');
-    const waitlist = students.filter(s => s.status === 'CADANGAN');
     const rejected = students.filter(s => s.status === 'TIDAK_DITERIMA');
     
     statistics[majorKey] = {
       totalApplicants: students.length,
       accepted: accepted.length,
-      waitlist: waitlist.length,
       rejected: rejected.length,
       quota: MAJOR_QUOTAS[majorKey],
       highestScore: students.length > 0 ? students[0].totalScore : 0,
