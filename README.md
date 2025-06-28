@@ -282,9 +282,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Jika Anda mengalami masalah atau memiliki pertanyaan:
 
-- 📧 Email: support@smkdigital.sch.id
+- 📧 Email: astrodigiso@gmail.com
 - 📱 WhatsApp: +62 xxx-xxxx-xxxx
-- 🌐 Website: https://smkdigital.sch.id
+
 
 ---
 
